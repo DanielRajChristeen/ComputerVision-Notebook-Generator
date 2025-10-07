@@ -1,0 +1,412 @@
+import React, { useState, useEffect } from 'react';
+import { Download, Plus, Trash2, RotateCcw, X, ChevronDown, ChevronUp } from 'lucide-react';
+
+const AutoVisionBuilder = () => {
+  const [projectInfo, setProjectInfo] = useState({
+    title: 'AutoVision_Project',
+    author: 'User',
+    style: 'Minimal',
+    platform: 'Download Notebook'
+  });
+
+  const [taskType, setTaskType] = useState({
+    task: 'Image Classification',
+    subtask: 'Single Label'
+  });
+
+  const [modelSetup, setModelSetup] = useState({
+    framework: 'PyTorch',
+    family: 'ResNet',
+    name: 'resnet18',
+    version: 'v1',
+    mode: 'Train',
+    source: 'Pre-trained',
+    weightsPath: 'Auto (Model Hub)'
+  });
+
+  const [preprocessing, setPreprocessing] = useState({
+    resize: '224',
+    normalize: true,
+    augmentations: ['RandomHorizontalFlip', 'ColorJitter'],
+    advancedAug: false,
+    specialized: 'auto'
+  });
+
+  const [dataset, setDataset] = useState({
+    source: 'Kaggle',
+    format: 'ImageFolder',
+    path: 'placeholder',
+    split: '0.8/0.1/0.1',
+    annotationType: 'BoundingBox'
+  });
+
+  const [training, setTraining] = useState({
+    epochs: '10',
+    batchSize: '16',
+    imageSize: '640',
+    lr: '0.001',
+    optimizer: 'Adam',
+    earlyStopping: true,
+    scheduler: 'None',
+    device: 'Auto'
+  });
+
+  const [evaluation, setEvaluation] = useState({
+    evaluate: true,
+    exportFormat: '.pt',
+    visualize: true,
+    saveMetrics: true,
+    generateReport: false
+  });
+
+  const [integrations, setIntegrations] = useState({
+    kaggleAPI: true,
+    githubPush: false,
+    gitlabSync: false,
+    huggingface: false,
+    wandb: false
+  });
+
+  const [notebookCells, setNotebookCells] = useState([]);
+  const [expandedSections, setExpandedSections] = useState({
+    project: true,
+    task: true,
+    model: true,
+    preprocessing: true,
+    dataset: true,
+    training: true,
+    evaluation: true,
+    integrations: true
+  });
+
+  const toggleSection = (section) => {
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const generateCell = (session) => {
+    const cellMap = {
+      project: {
+        id: `cell_project_${Date.now()}`,
+        type: 'markdown',
+        content: `# ${projectInfo.title}\n**Author:** ${projectInfo.author}\n**Style:** ${projectInfo.style}\n**Platform:** ${projectInfo.platform}`,
+        session: 'project'
+      },
+      task: {
+        id: `cell_task_${Date.now()}`,
+        type: 'markdown',
+        content: `## Task Configuration\n**Task Type:** ${taskType.task}\n**Subtask:** ${taskType.subtask}`,
+        session: 'task'
+      },
+      model: {
+        id: `cell_model_${Date.now()}`,
+        type: 'code',
+        content: `# Model Setup: ${modelSetup.name}\nimport torch\nimport torchvision.models as models\n\n# Load ${modelSetup.name} model\nmodel = models.${modelSetup.name}(${modelSetup.source === 'Pre-trained' ? `weights='IMAGENET1K_${modelSetup.version.toUpperCase()}'` : 'weights=None'})\ndevice = torch.device('cuda' if torch.cuda.is_available() else 'cpu')\nmodel = model.to(device)\nprint(f'Model loaded: {modelSetup.name} on {device}')`,
+        session: 'model'
+      },
+      preprocessing: {
+        id: `cell_preprocess_${Date.now()}`,
+        type: 'code',
+        content: `# Preprocessing Pipeline\nfrom torchvision import transforms\n\ntransform = transforms.Compose([\n    transforms.Resize(${preprocessing.resize}),\n    transforms.CenterCrop(${preprocessing.resize}),\n    ${preprocessing.augmentations.map(aug => `transforms.${aug}(),`).join('\n    ')}\n    ${preprocessing.normalize ? 'transforms.ToTensor(),\n    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])' : 'transforms.ToTensor()'}\n])\nprint('Preprocessing pipeline configured')`,
+        session: 'preprocessing'
+      },
+      dataset: {
+        id: `cell_dataset_${Date.now()}`,
+        type: 'code',
+        content: `# Dataset Setup\nfrom torch.utils.data import DataLoader\nfrom torchvision.datasets import ImageFolder\n\n# Load dataset from ${dataset.source}\ndataset_path = '${dataset.path}'\ntrain_dataset = ImageFolder(root=f'{dataset_path}/train', transform=transform)\nval_dataset = ImageFolder(root=f'{dataset_path}/val', transform=transform)\n\ntrain_loader = DataLoader(train_dataset, batch_size=${training.batchSize}, shuffle=True)\nval_loader = DataLoader(val_dataset, batch_size=${training.batchSize}, shuffle=False)\n\nprint(f'Training samples: {len(train_dataset)}')\nprint(f'Validation samples: {len(val_dataset)}')`,
+        session: 'dataset'
+      },
+      training: {
+        id: `cell_training_${Date.now()}`,
+        type: 'code',
+        content: `# Training Configuration\nimport torch.nn as nn\nimport torch.optim as optim\n\ncriterion = nn.CrossEntropyLoss()\noptimizer = optim.${training.optimizer}(model.parameters(), lr=${training.lr})\n\n# Training loop\nnum_epochs = ${training.epochs}\nfor epoch in range(num_epochs):\n    model.train()\n    running_loss = 0.0\n    \n    for inputs, labels in train_loader:\n        inputs, labels = inputs.to(device), labels.to(device)\n        \n        optimizer.zero_grad()\n        outputs = model(inputs)\n        loss = criterion(outputs, labels)\n        loss.backward()\n        optimizer.step()\n        \n        running_loss += loss.item()\n    \n    print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {running_loss/len(train_loader):.4f}')`,
+        session: 'training'
+      },
+      evaluation: {
+        id: `cell_eval_${Date.now()}`,
+        type: 'code',
+        content: `# Model Evaluation\nmodel.eval()\ncorrect = 0\ntotal = 0\n\nwith torch.no_grad():\n    for inputs, labels in val_loader:\n        inputs, labels = inputs.to(device), labels.to(device)\n        outputs = model(inputs)\n        _, predicted = torch.max(outputs.data, 1)\n        total += labels.size(0)\n        correct += (predicted == labels).sum().item()\n\naccuracy = 100 * correct / total\nprint(f'Validation Accuracy: {accuracy:.2f}%')\n\n# Save model\ntorch.save(model.state_dict(), 'model${evaluation.exportFormat}')`,
+        session: 'evaluation'
+      },
+      integrations: {
+        id: `cell_integrations_${Date.now()}`,
+        type: 'code',
+        content: `# Integrations Setup\n${integrations.kaggleAPI ? "# Kaggle API\n!pip install kaggle\nimport kaggle\n" : ""}${integrations.wandb ? "# Weights & Biases\n!pip install wandb\nimport wandb\nwandb.init(project='autovision')\n" : ""}${integrations.huggingface ? "# HuggingFace Hub\n!pip install huggingface_hub\nfrom huggingface_hub import HfApi\n" : ""}print('Integrations configured')`,
+        session: 'integrations'
+      }
+    };
+
+    const newCell = cellMap[session];
+    setNotebookCells(prev => [...prev.filter(cell => cell.session !== session), newCell]);
+  };
+
+  const clearCell = (session) => {
+    setNotebookCells(prev => prev.filter(cell => cell.session !== session));
+  };
+
+  const resetSettings = () => {
+    setProjectInfo({ title: 'AutoVision_Project', author: 'User', style: 'Minimal', platform: 'Download Notebook' });
+    setTaskType({ task: 'Image Classification', subtask: 'Single Label' });
+    setModelSetup({ framework: 'PyTorch', family: 'ResNet', name: 'resnet18', version: 'v1', mode: 'Train', source: 'Pre-trained', weightsPath: 'Auto (Model Hub)' });
+    setPreprocessing({ resize: '224', normalize: true, augmentations: ['RandomHorizontalFlip', 'ColorJitter'], advancedAug: false, specialized: 'auto' });
+    setDataset({ source: 'Kaggle', format: 'ImageFolder', path: 'placeholder', split: '0.8/0.1/0.1', annotationType: 'BoundingBox' });
+    setTraining({ epochs: '10', batchSize: '16', imageSize: '640', lr: '0.001', optimizer: 'Adam', earlyStopping: true, scheduler: 'None', device: 'Auto' });
+    setEvaluation({ evaluate: true, exportFormat: '.pt', visualize: true, saveMetrics: true, generateReport: false });
+    setIntegrations({ kaggleAPI: true, githubPush: false, gitlabSync: false, huggingface: false, wandb: false });
+  };
+
+  const clearAll = () => {
+    resetSettings();
+    setNotebookCells([]);
+  };
+
+  const downloadNotebook = () => {
+    const notebook = {
+      cells: notebookCells.map(cell => ({
+        cell_type: cell.type === 'code' ? 'code' : 'markdown',
+        metadata: {},
+        source: [cell.content],
+        ...(cell.type === 'code' ? { execution_count: null, outputs: [] } : {})
+      })),
+      metadata: {
+        kernelspec: {
+          display_name: 'Python 3',
+          language: 'python',
+          name: 'python3'
+        },
+        language_info: {
+          name: 'python',
+          version: '3.8.0'
+        }
+      },
+      nbformat: 4,
+      nbformat_minor: 4
+    };
+
+    const blob = new Blob([JSON.stringify(notebook, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `AutoVision_${taskType.task.replace(/\s+/g, '_')}_${modelSetup.name}_${modelSetup.version}.ipynb`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const SectionHeader = ({ title, section, children }) => (
+    <div className="mb-3">
+      <button
+        onClick={() => toggleSection(section)}
+        className="w-full flex items-center justify-between p-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all shadow-sm"
+      >
+        <span className="font-semibold text-sm">{title}</span>
+        {expandedSections[section] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+      </button>
+      {expandedSections[section] && (
+        <div className="mt-2 p-3 bg-white rounded-lg border border-red-100">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+
+  const InputField = ({ label, value, onChange, type = 'text' }) => (
+    <div className="mb-2">
+      <label className="block text-xs font-medium text-gray-700 mb-1">{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={onChange}
+        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:border-red-500 focus:outline-none transition-colors"
+      />
+    </div>
+  );
+
+  const SelectField = ({ label, value, onChange, options }) => (
+    <div className="mb-2">
+      <label className="block text-xs font-medium text-gray-700 mb-1">{label}</label>
+      <select
+        value={value}
+        onChange={onChange}
+        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:border-red-500 focus:outline-none transition-colors bg-white"
+      >
+        {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+      </select>
+    </div>
+  );
+
+  const ToggleField = ({ label, value, onChange }) => (
+    <div className="flex items-center justify-between mb-2">
+      <label className="text-xs font-medium text-gray-700">{label}</label>
+      <button
+        onClick={() => onChange(!value)}
+        className={`w-10 h-5 rounded-full transition-colors ${value ? 'bg-red-600' : 'bg-gray-300'}`}
+      >
+        <div className={`w-4 h-4 bg-white rounded-full shadow transform transition-transform ${value ? 'translate-x-5' : 'translate-x-0.5'}`} />
+      </button>
+    </div>
+  );
+
+  const ActionButtons = ({ onGenerate, onClear }) => (
+    <div className="flex gap-2 mt-3">
+      <button
+        onClick={onGenerate}
+        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors shadow-sm"
+      >
+        <Plus size={14} />
+        Generate
+      </button>
+      <button
+        onClick={onClear}
+        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm bg-white border border-red-600 text-red-600 rounded hover:bg-red-50 transition-colors"
+      >
+        <Trash2 size={14} />
+        Clear
+      </button>
+    </div>
+  );
+
+  return (
+    <div className="flex h-screen bg-gray-50">
+      {/* Left Panel - Input Controls */}
+      <div className="w-96 bg-white border-r-4 border-red-600 flex flex-col">
+        <div className="bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-4">
+          <h2 className="text-lg font-bold">Input Configuration</h2>
+          <p className="text-xs text-red-100 mt-0.5">Configure your notebook settings</p>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <SectionHeader title="1. Project Info" section="project">
+            <InputField label="Project Title" value={projectInfo.title} onChange={(e) => setProjectInfo({ ...projectInfo, title: e.target.value })} />
+            <InputField label="Author" value={projectInfo.author} onChange={(e) => setProjectInfo({ ...projectInfo, author: e.target.value })} />
+            <SelectField label="Notebook Style" value={projectInfo.style} onChange={(e) => setProjectInfo({ ...projectInfo, style: e.target.value })} options={['Minimal', 'Detailed', 'Educational']} />
+            <SelectField label="Output Platform" value={projectInfo.platform} onChange={(e) => setProjectInfo({ ...projectInfo, platform: e.target.value })} options={['Download Notebook', 'Google Colab', 'Kaggle']} />
+            <ActionButtons onGenerate={() => generateCell('project')} onClear={() => clearCell('project')} />
+          </SectionHeader>
+
+          <SectionHeader title="2. Task Type" section="task">
+            <SelectField label="Task" value={taskType.task} onChange={(e) => setTaskType({ ...taskType, task: e.target.value })} options={['Image Classification', 'Object Detection', 'Segmentation', 'GANs', 'Diffusion']} />
+            <SelectField label="Subtask" value={taskType.subtask} onChange={(e) => setTaskType({ ...taskType, subtask: e.target.value })} options={['Single Label', 'Multi Label', 'Binary']} />
+            <ActionButtons onGenerate={() => generateCell('task')} onClear={() => clearCell('task')} />
+          </SectionHeader>
+
+          <SectionHeader title="3. Model Setup" section="model">
+            <SelectField label="Framework" value={modelSetup.framework} onChange={(e) => setModelSetup({ ...modelSetup, framework: e.target.value })} options={['PyTorch', 'TensorFlow', 'Keras']} />
+            <SelectField label="Model Family" value={modelSetup.family} onChange={(e) => setModelSetup({ ...modelSetup, family: e.target.value })} options={['ResNet', 'MobileNet', 'YOLO', 'ViT', 'CLIP']} />
+            <InputField label="Model Name" value={modelSetup.name} onChange={(e) => setModelSetup({ ...modelSetup, name: e.target.value })} />
+            <InputField label="Version" value={modelSetup.version} onChange={(e) => setModelSetup({ ...modelSetup, version: e.target.value })} />
+            <SelectField label="Model Source" value={modelSetup.source} onChange={(e) => setModelSetup({ ...modelSetup, source: e.target.value })} options={['Pre-trained', 'Custom Weights', 'Random Init']} />
+            <ActionButtons onGenerate={() => generateCell('model')} onClear={() => clearCell('model')} />
+          </SectionHeader>
+
+          <SectionHeader title="4. Preprocessing" section="preprocessing">
+            <InputField label="Resize" value={preprocessing.resize} onChange={(e) => setPreprocessing({ ...preprocessing, resize: e.target.value })} />
+            <ToggleField label="Normalize" value={preprocessing.normalize} onChange={(v) => setPreprocessing({ ...preprocessing, normalize: v })} />
+            <ToggleField label="Advanced Augmentations" value={preprocessing.advancedAug} onChange={(v) => setPreprocessing({ ...preprocessing, advancedAug: v })} />
+            <ActionButtons onGenerate={() => generateCell('preprocessing')} onClear={() => clearCell('preprocessing')} />
+          </SectionHeader>
+
+          <SectionHeader title="5. Dataset" section="dataset">
+            <SelectField label="Source" value={dataset.source} onChange={(e) => setDataset({ ...dataset, source: e.target.value })} options={['Kaggle', 'Local', 'HuggingFace', 'COCO', 'Custom']} />
+            <SelectField label="Format" value={dataset.format} onChange={(e) => setDataset({ ...dataset, format: e.target.value })} options={['ImageFolder', 'COCO', 'YOLO', 'CSV']} />
+            <InputField label="Path/Identifier" value={dataset.path} onChange={(e) => setDataset({ ...dataset, path: e.target.value })} />
+            <InputField label="Split" value={dataset.split} onChange={(e) => setDataset({ ...dataset, split: e.target.value })} />
+            <ActionButtons onGenerate={() => generateCell('dataset')} onClear={() => clearCell('dataset')} />
+          </SectionHeader>
+
+          <SectionHeader title="6. Training" section="training">
+            <InputField label="Epochs" value={training.epochs} onChange={(e) => setTraining({ ...training, epochs: e.target.value })} type="number" />
+            <InputField label="Batch Size" value={training.batchSize} onChange={(e) => setTraining({ ...training, batchSize: e.target.value })} type="number" />
+            <InputField label="Learning Rate" value={training.lr} onChange={(e) => setTraining({ ...training, lr: e.target.value })} type="number" />
+            <SelectField label="Optimizer" value={training.optimizer} onChange={(e) => setTraining({ ...training, optimizer: e.target.value })} options={['Adam', 'SGD', 'AdamW', 'RMSprop']} />
+            <ToggleField label="Early Stopping" value={training.earlyStopping} onChange={(v) => setTraining({ ...training, earlyStopping: v })} />
+            <ActionButtons onGenerate={() => generateCell('training')} onClear={() => clearCell('training')} />
+          </SectionHeader>
+
+          <SectionHeader title="7. Evaluation" section="evaluation">
+            <ToggleField label="Evaluate Model" value={evaluation.evaluate} onChange={(v) => setEvaluation({ ...evaluation, evaluate: v })} />
+            <SelectField label="Export Format" value={evaluation.exportFormat} onChange={(e) => setEvaluation({ ...evaluation, exportFormat: e.target.value })} options={['.pt', '.pth', '.onnx', '.h5']} />
+            <ToggleField label="Visualize Predictions" value={evaluation.visualize} onChange={(v) => setEvaluation({ ...evaluation, visualize: v })} />
+            <ToggleField label="Save Metrics" value={evaluation.saveMetrics} onChange={(v) => setEvaluation({ ...evaluation, saveMetrics: v })} />
+            <ActionButtons onGenerate={() => generateCell('evaluation')} onClear={() => clearCell('evaluation')} />
+          </SectionHeader>
+
+          <SectionHeader title="8. Integrations" section="integrations">
+            <ToggleField label="Kaggle API" value={integrations.kaggleAPI} onChange={(v) => setIntegrations({ ...integrations, kaggleAPI: v })} />
+            <ToggleField label="GitHub Push" value={integrations.githubPush} onChange={(v) => setIntegrations({ ...integrations, githubPush: v })} />
+            <ToggleField label="HuggingFace Hub" value={integrations.huggingface} onChange={(v) => setIntegrations({ ...integrations, huggingface: v })} />
+            <ToggleField label="WandB" value={integrations.wandb} onChange={(v) => setIntegrations({ ...integrations, wandb: v })} />
+            <ActionButtons onGenerate={() => generateCell('integrations')} onClear={() => clearCell('integrations')} />
+          </SectionHeader>
+        </div>
+
+        <div className="border-t-2 border-red-100 p-4 bg-gray-50">
+          <div className="flex gap-2">
+            <button
+              onClick={resetSettings}
+              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors"
+            >
+              <RotateCcw size={14} />
+              Reset
+            </button>
+            <button
+              onClick={clearAll}
+              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm bg-white border border-red-600 text-red-600 rounded hover:bg-red-50 transition-colors"
+            >
+              <X size={14} />
+              Clear All
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Panel - Notebook Output */}
+      <div className="flex-1 flex flex-col bg-white">
+        <div className="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-4 flex items-center justify-between shadow-lg">
+          <div>
+            <h1 className="text-2xl font-bold">AutoVision Builder</h1>
+            <p className="text-sm text-red-100 mt-0.5">Notebook Preview - {notebookCells.length} cells</p>
+          </div>
+          <button
+            onClick={downloadNotebook}
+            disabled={notebookCells.length === 0}
+            className="flex items-center gap-2 px-5 py-2.5 bg-white text-red-600 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md font-semibold"
+          >
+            <Download size={20} />
+            Download .ipynb
+          </button>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
+          {notebookCells.length === 0 ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <div className="text-8xl mb-6">📓</div>
+                <h3 className="text-2xl font-semibold text-gray-700 mb-2">No Cells Generated</h3>
+                <p className="text-gray-500">Configure settings on the left and click Generate buttons to create your notebook</p>
+              </div>
+            </div>
+          ) : (
+            <div className="max-w-5xl mx-auto space-y-3">
+              {notebookCells.map((cell, idx) => (
+                <div key={cell.id} className="border-2 border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
+                  <div className={`px-4 py-2 text-xs font-mono font-semibold flex items-center justify-between ${cell.type === 'code' ? 'bg-red-50 text-red-700' : 'bg-gray-100 text-gray-700'}`}>
+                    <span>{cell.type === 'code' ? 'In [ ]' : 'Markdown'}</span>
+                    <span className="text-xs opacity-60">{cell.session}</span>
+                  </div>
+                  <pre className="p-4 text-sm overflow-x-auto bg-white font-mono">
+                    <code className={cell.type === 'markdown' ? 'text-gray-700' : 'text-gray-900'}>
+                      {cell.content}
+                    </code>
+                  </pre>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AutoVisionBuilder;
