@@ -1,1666 +1,743 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AutoVision Notebook Generator</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>AutoVision Notebook Generator — Refined</title>
+<style>
+  :root{
+    --bg:#ffffff; --panel:#f7f7f8; --card:#ffffff; --muted:#666; --text:#0b0b0b;
+    --accent: #b91c1c; /* red accent */
+    --code-bg:#111111; --code-text:#e6e6e6; --border: #e6e6e6;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0b0b0b; --panel:#111216; --card:#0f1113; --muted:#9aa3ac; --text:#e6eef3;
+      --accent: #ff6666;
+      --code-bg:#0b0b0b; --code-text:#e6e6e6; --border: #202226;
+    }
+  }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: linear-gradient(180deg, rgba(0,0,0,0.02), transparent), var(--bg);
+    color:var(--text); min-height:100vh; padding:18px;
+  }
 
-        .container {
-            max-width: 1800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
-        }
+  .app{
+    max-width:1400px; margin:0 auto; border-radius:12px; overflow:hidden;
+    box-shadow: 0 10px 40px rgba(2,6,23,0.12);
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+  }
 
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
+  header{
+    padding:22px 28px; display:flex; gap:16px; align-items:center; border-bottom:1px solid var(--border);
+    background: linear-gradient(90deg, rgba(0,0,0,0.02), transparent);
+  }
+  header h1{font-size:18px; margin:0; letter-spacing:0.2px}
+  header p{margin:0; color:var(--muted); font-size:13px}
 
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-        }
+  .content { display:flex; gap:0; height: calc(100vh - 120px); }
 
-        .header p {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
+  /* LEFT */
+  .left { width:420px; background:var(--panel); padding:18px; overflow:auto; border-right:1px solid var(--border);}
+  .card { background:var(--card); border-radius:10px; padding:14px; margin-bottom:14px; box-shadow: 0 4px 14px rgba(2,6,23,0.04); border:1px solid transparent;}
+  .card .head { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  .card .head h3{ margin:0; font-size:13px; color:var(--accent)}
+  .controls { display:flex; gap:8px }
+  .btn { border:0; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:600; font-size:13px}
+  .btn-prim{ background:var(--accent); color:white; box-shadow: 0 6px 14px rgba(0,0,0,0.08)}
+  .btn-ghost{ background:transparent; border:1px solid var(--border); color:var(--text)}
+  .muted{ color:var(--muted); font-size:13px }
 
-        .main-content {
-            display: grid;
-            grid-template-columns: 450px 1fr;
-            gap: 0;
-            height: calc(100vh - 200px);
-        }
+  label{ display:block; font-size:13px; color:var(--muted); margin-bottom:6px }
+  input[type="text"], select, textarea, input[type="number"]{
+    width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border);
+    background:transparent; color:var(--text); font-size:14px;
+  }
+  .row{ display:flex; gap:10px }
+  .small{ width:140px }
 
-        .left-panel {
-            background: #f8f9fa;
-            border-right: 2px solid #e0e0e0;
-            overflow-y: auto;
-            padding: 20px;
-        }
+  .tog { display:inline-flex; align-items:center; gap:8px; cursor:pointer; }
+  .switch { width:44px; height:24px; background:#ccc; border-radius:999px; position:relative; display:inline-block }
+  .switch .dot{ width:18px;height:18px;background:white;border-radius:50%;position:absolute; left:3px;top:3px; transition:0.18s}
+  .switch.on{ background:var(--accent) }
+  .switch.on .dot{ transform:translateX(20px) }
 
-        .right-panel {
-            background: #1e1e1e;
-            color: #d4d4d4;
-            overflow-y: auto;
-            padding: 20px;
-            font-family: 'Courier New', monospace;
-        }
+  /* RIGHT */
+  .right { flex:1; padding:18px; background: linear-gradient(180deg, rgba(0,0,0,0.01), transparent); overflow:auto; }
+  .previewTop { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px }
+  .previewTop .info { color:var(--muted); font-size:13px }
+  .cells { display:block; }
+  .cell { background:var(--code-bg); border-radius:10px; padding:12px; margin-bottom:12px; border-left:4px solid var(--accent);
+         color:var(--code-text); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; font-size:13px; position:relative; white-space:pre-wrap; }
+  .cell.markdown { border-left-color: #2aa198; background: linear-gradient(0deg, rgba(255,255,255,0.02), transparent) }
+  .cell .label { position:absolute; right:12px; top:8px; font-size:12px; color:var(--muted) }
+  .cell .toolbar { position:absolute; left:10px; top:8px; display:flex; gap:6px }
+  .cell .tool { background:transparent; border:1px solid var(--border); color:var(--muted); padding:4px 8px; border-radius:6px; cursor:pointer; font-size:12px }
+  .cell[contenteditable="true"]{ outline: none; border: 1px dashed rgba(255,255,255,0.04); padding:10px 12px; }
 
-        .section {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
+  .empty { text-align:center; color:var(--muted); padding:60px 20px; border-radius:8px; border:1px dashed var(--border) }
 
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #667eea;
-        }
+  footer.controls { display:flex; gap:10px; align-items:center; margin-top:8px; }
+  .ai-btn { background:transparent; border:1px solid var(--accent); color:var(--accent); padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:700 }
+  .danger{ background:#e53935; color:white }
 
-        .section-header h3 {
-            color: #667eea;
-            font-size: 1.2em;
-        }
-
-        .section-controls {
-            display: flex;
-            gap: 10px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            color: #333;
-            font-size: 0.9em;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 0.95em;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .form-group textarea {
-            resize: vertical;
-            min-height: 60px;
-        }
-
-        .toggle-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .toggle {
-            position: relative;
-            width: 50px;
-            height: 26px;
-        }
-
-        .toggle input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: 0.4s;
-            border-radius: 26px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: 0.4s;
-            border-radius: 50%;
-        }
-
-        input:checked + .slider {
-            background-color: #667eea;
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(24px);
-        }
-
-        .btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9em;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .btn-generate {
-            background: #667eea;
-            color: white;
-        }
-
-        .btn-generate:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-clear {
-            background: #f44336;
-            color: white;
-        }
-
-        .btn-clear:hover {
-            background: #da190b;
-        }
-
-        .btn-download {
-            background: #4CAF50;
-            color: white;
-            padding: 15px 30px;
-            font-size: 1.1em;
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        .btn-download:hover {
-            background: #45a049;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
-        }
-
-        .global-controls {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .global-controls h3 {
-            color: #667eea;
-            margin-bottom: 15px;
-        }
-
-        .global-controls .btn-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .btn-reset {
-            background: #ff9800;
-            color: white;
-        }
-
-        .btn-reset:hover {
-            background: #e68900;
-        }
-
-        .btn-clear-all {
-            background: #e91e63;
-            color: white;
-        }
-
-        .btn-clear-all:hover {
-            background: #c2185b;
-        }
-
-        .notebook-preview {
-            background: #1e1e1e;
-            border-radius: 8px;
-            padding: 20px;
-        }
-
-        .notebook-cell {
-            background: #2d2d2d;
-            border-left: 4px solid #667eea;
-            border-radius: 6px;
-            padding: 15px;
-            margin-bottom: 15px;
-            position: relative;
-        }
-
-        .notebook-cell.markdown {
-            border-left-color: #4CAF50;
-        }
-
-        .cell-label {
-            color: #888;
-            font-size: 0.8em;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-        }
-
-        .cell-content {
-            color: #d4d4d4;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            line-height: 1.6;
-        }
-
-        .empty-preview {
-            text-align: center;
-            color: #888;
-            padding: 60px 20px;
-        }
-
-        .empty-preview svg {
-            width: 100px;
-            height: 100px;
-            margin-bottom: 20px;
-            opacity: 0.3;
-        }
-
-        ::-webkit-scrollbar {
-            width: 10px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #667eea;
-            border-radius: 5px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #5568d3;
-        }
-
-        select, option {
-            background: var(--panel);
-            color: var(--text);
-        }
-        :root {
-            --bg:#ffeaea;
-            --panel:#fff0f0;
-        }
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg:#2b0000;
-                --panel:#3a0000;
-            }
-        }
-
-        .right-panel::-webkit-scrollbar-track {
-            background: #2d2d2d;
-        }
-
-        .info-badge {
-            display: inline-block;
-            background: #e3f2fd;
-            color: #1976d2;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.8em;
-            margin-left: 10px;
-        }
-    </style>
+  /* small responsiveness */
+  @media (max-width:880px){
+    .left{ width:100%; height:auto; position:sticky; top:0; z-index:12 }
+    .content{ flex-direction:column }
+    .right{ height:60vh }
+  }
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🎯 AutoVision Notebook Generator</h1>
-            <p>Create production-ready Jupyter notebooks for computer vision workflows</p>
-        </div>
-
-        <div class="main-content">
-            <!-- LEFT PANEL -->
-            <div class="left-panel">
-                                <!-- AI Touch Section -->
-                                <div class="card section">
-                                    <h3>AI Touch ✨</h3>
-                                    <label for="aiPrompt">Instruction</label>
-                                    <textarea id="aiPrompt" placeholder="Refine and optimize the notebook."></textarea>
-                                    <button class="btn btn-generate" onclick="runAITouch()">Run AI Touch</button>
-                                    <div id="codePreview" style="margin-top:10px;"></div>
-                                </div>
-
-                                <!-- Model Test Card -->
-                                <div class="card section">
-                                    <h3>🧪 Test Model</h3>
-                                    <label>Number of Images</label>
-                                    <input id="testNum" type="number" value="3" min="1">
-                                    <label>Source</label>
-                                    <select id="testSource">
-                                        <option value="upload">Upload & Detect</option>
-                                        <option value="dataset">Dataset Random</option>
-                                        <option value="url">From URL</option>
-                                    </select>
-                                    <button class="btn btn-generate" onclick="generateTest()">Generate</button>
-                                </div>
-                <!-- Project Info Section -->
-                <div class="section">
-                    <div class="section-header">
-                        <h3>📋 Project Info</h3>
-                        <div class="section-controls">
-                            <button class="btn btn-generate" onclick="generateSection('project')">Generate</button>
-                            <button class="btn btn-clear" onclick="clearSection('project')">Clear</button>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Project Title</label>
-                        <input type="text" id="projectTitle" value="AutoVision_Project">
-                    </div>
-                    <div class="form-group">
-                        <label>Author</label>
-                        <input type="text" id="author" value="User">
-                    </div>
-                    <div class="form-group">
-                        <label>Notebook Style</label>
-                        <select id="notebookStyle">
-                            <option value="minimal">Minimal</option>
-                            <option value="detailed">Detailed</option>
-                            <option value="educational">Educational</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Output Platform</label>
-                        <select id="outputPlatform">
-                            <option value="download">Download Notebook</option>
-                            <option value="colab">Google Colab</option>
-                            <option value="kaggle">Kaggle Kernel</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Task Type Section -->
-                <div class="section">
-                    <div class="section-header">
-                        <h3>🎯 Task Type</h3>
-                        <div class="section-controls">
-                            <button class="btn btn-generate" onclick="generateSection('task')">Generate</button>
-                            <button class="btn btn-clear" onclick="clearSection('task')">Clear</button>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Task</label>
-                        <select id="task" onchange="updateSubtasks()">
-                            <option value="classification">Image Classification</option>
-                            <option value="detection">Object Detection</option>
-                            <option value="segmentation">Segmentation</option>
-                            <option value="generation">Image Generation</option>
-                            <option value="video">Video Analysis</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Subtask</label>
-                        <select id="subtask">
-                            <option value="single">Single Label</option>
-                            <option value="multi">Multi Label</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Model Setup Section -->
-                <div class="section">
-                    <div class="section-header">
-                        <h3>🤖 Model Setup</h3>
-                        <div class="section-controls">
-                            <button class="btn btn-generate" onclick="generateSection('model')">Generate</button>
-                            <button class="btn btn-clear" onclick="clearSection('model')">Clear</button>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Framework</label>
-                        <select id="framework" onchange="updateModels()">
-                            <option value="pytorch">PyTorch</option>
-                            <option value="tensorflow">TensorFlow</option>
-                            <option value="ultralytics">Ultralytics</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Model Family</label>
-                        <select id="modelFamily" onchange="updateModelNames()">
-                            <option value="resnet">ResNet</option>
-                            <option value="mobilenet">MobileNet</option>
-                            <option value="efficientnet">EfficientNet</option>
-                            <option value="yolo">YOLO</option>
-                            <option value="vit">Vision Transformer</option>
-                            <option value="diffusion">Diffusion Models</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Model Name</label>
-                        <select id="modelName">
-                            <option value="resnet18">resnet18</option>
-                            <option value="resnet34">resnet34</option>
-                            <option value="resnet50">resnet50</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Model Version</label>
-                        <input type="text" id="modelVersion" value="v1">
-                    </div>
-                    <div class="form-group">
-                        <label>Mode</label>
-                        <select id="mode">
-                            <option value="train">Train</option>
-                            <option value="inference">Inference</option>
-                            <option value="finetune">Fine-tune</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Model Source</label>
-                        <select id="modelSource" onchange="toggleCustomWeights()">
-                            <option value="pretrained">Pre-trained</option>
-                            <option value="custom">Custom Weights</option>
-                            <option value="scratch">From Scratch</option>
-                        </select>
-                    </div>
-                    <div class="form-group" id="customWeightsGroup" style="display:none;">
-                        <label>Custom Weights Path</label>
-                        <input type="text" id="customWeightsPath" placeholder="/path/to/weights.pth">
-                    </div>
-                </div>
-
-                <!-- Preprocessing Section -->
-                <div class="section">
-                    <div class="section-header">
-                        <h3>🔄 Preprocessing</h3>
-                        <div class="section-controls">
-                            <button class="btn btn-generate" onclick="generateSection('preprocess')">Generate</button>
-                            <button class="btn btn-clear" onclick="clearSection('preprocess')">Clear</button>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Resize/Crop</label>
-                        <input type="number" id="imageSize" value="224">
-                    </div>
-                    <div class="form-group toggle-group">
-                        <label>Normalize</label>
-                        <label class="toggle">
-                            <input type="checkbox" id="normalize" checked>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                    <div class="form-group toggle-group">
-                        <label>Basic Augmentations</label>
-                        <label class="toggle">
-                            <input type="checkbox" id="augmentations" checked>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                    <div class="form-group toggle-group">
-                        <label>Advanced Augmentations</label>
-                        <label class="toggle">
-                            <input type="checkbox" id="advancedAug">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Dataset Section -->
-                <div class="section">
-                    <div class="section-header">
-                        <h3>📊 Dataset Setup</h3>
-                        <div class="section-controls">
-                            <button class="btn btn-generate" onclick="generateSection('dataset')">Generate</button>
-                            <button class="btn btn-clear" onclick="clearSection('dataset')">Clear</button>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Source</label>
-                        <select id="datasetSource">
-                            <option value="kaggle">Kaggle</option>
-                            <option value="local">Local Path</option>
-                            <option value="huggingface">HuggingFace</option>
-                            <option value="url">URL</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Format</label>
-                        <select id="datasetFormat">
-                            <option value="imagefolder">ImageFolder</option>
-                            <option value="coco">COCO</option>
-                            <option value="yolo">YOLO</option>
-                            <option value="csv">CSV</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Path/Identifier</label>
-                        <input type="text" id="datasetPath" placeholder="dataset-name or /path/to/data">
-                    </div>
-                    <div class="form-group">
-                        <label>Train/Val/Test Split</label>
-                        <input type="text" id="splitRatio" value="0.8/0.1/0.1">
-                    </div>
-                </div>
-
-                <!-- Training Section -->
-                <div class="section">
-                    <div class="section-header">
-                        <h3>🚀 Training Parameters</h3>
-                        <div class="section-controls">
-                            <button class="btn btn-generate" onclick="generateSection('training')">Generate</button>
-                            <button class="btn btn-clear" onclick="clearSection('training')">Clear</button>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Epochs</label>
-                        <input type="number" id="epochs" value="10">
-                    </div>
-                    <div class="form-group">
-                        <label>Batch Size</label>
-                        <input type="number" id="batchSize" value="16">
-                    </div>
-                    <div class="form-group">
-                        <label>Learning Rate</label>
-                        <input type="text" id="learningRate" value="0.001">
-                    </div>
-                    <div class="form-group">
-                        <label>Optimizer</label>
-                        <select id="optimizer">
-                            <option value="adam">Adam</option>
-                            <option value="sgd">SGD</option>
-                            <option value="adamw">AdamW</option>
-                        </select>
-                    </div>
-                    <div class="form-group toggle-group">
-                        <label>Early Stopping</label>
-                        <label class="toggle">
-                            <input type="checkbox" id="earlyStopping" checked>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                    <div class="form-group">
-                        <label>Scheduler</label>
-                        <select id="scheduler">
-                            <option value="none">None</option>
-                            <option value="step">StepLR</option>
-                            <option value="cosine">CosineAnnealing</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Evaluation Section -->
-                <div class="section">
-                    <div class="section-header">
-                        <h3>📈 Evaluation & Export</h3>
-                        <div class="section-controls">
-                            <button class="btn btn-generate" onclick="generateSection('evaluation')">Generate</button>
-                            <button class="btn btn-clear" onclick="clearSection('evaluation')">Clear</button>
-                        </div>
-                    </div>
-                    <div class="form-group toggle-group">
-                        <label>Run Evaluation</label>
-                        <label class="toggle">
-                            <input type="checkbox" id="runEval" checked>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                    <div class="form-group">
-                        <label>Export Format</label>
-                        <select id="exportFormat">
-                            <option value="pt">.pt (PyTorch)</option>
-                            <option value="onnx">.onnx</option>
-                            <option value="tflite">.tflite</option>
-                        </select>
-                    </div>
-                    <div class="form-group toggle-group">
-                        <label>Visualize Predictions</label>
-                        <label class="toggle">
-                            <input type="checkbox" id="visualize" checked>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                    <div class="form-group toggle-group">
-                        <label>Save Metrics</label>
-                        <label class="toggle">
-                            <input type="checkbox" id="saveMetrics" checked>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Integrations Section -->
-                <div class="section">
-                    <div class="section-header">
-                        <h3>🔗 Integrations</h3>
-                        <div class="section-controls">
-                            <button class="btn btn-generate" onclick="generateSection('integrations')">Generate</button>
-                            <button class="btn btn-clear" onclick="clearSection('integrations')">Clear</button>
-                        </div>
-                    </div>
-                    <div class="form-group toggle-group">
-                        <label>Kaggle API</label>
-                        <label class="toggle">
-                            <input type="checkbox" id="kaggleAPI" checked>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                    <div class="form-group toggle-group">
-                        <label>WandB/TensorBoard</label>
-                        <label class="toggle">
-                            <input type="checkbox" id="wandb">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                    <div class="form-group toggle-group">
-                        <label>HuggingFace Hub</label>
-                        <label class="toggle">
-                            <input type="checkbox" id="huggingface">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Global Controls -->
-                <div class="global-controls">
-                    <h3>🎮 Global Controls</h3>
-                    <div class="btn-group">
-                        <button class="btn btn-reset" onclick="resetSettings()">Reset Settings</button>
-                        <button class="btn btn-clear-all" onclick="clearAll()">Clear All</button>
-                    </div>
-                    <button class="btn btn-download" onclick="downloadNotebook()">📥 Download Notebook (.ipynb)</button>
-                </div>
-            </div>
-
-            <!-- RIGHT PANEL -->
-            <div class="right-panel">
-                <div class="notebook-preview" id="notebookPreview">
-                    <div class="empty-preview">
-                        <svg fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-                        </svg>
-                        <h3>No cells generated yet</h3>
-                        <p>Configure settings and click Generate buttons to build your notebook</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="app">
+  <header>
+    <div style="flex:1">
+      <h1>AutoVision Notebook Generator</h1>
+      <p style="margin-top:6px" class="muted">Interactive notebook composer — choose, refine, download. AI Touch optional.</p>
     </div>
-
-    <script>
-        // Notebook state management
-        let notebookCells = [];
-
-                // --- AI Touch Logic ---
-                async function runAITouch() {
-                    const notebookJSON = getCurrentNotebookJSON();
-                    const userPrompt = document.getElementById("aiPrompt").value || "Refine and optimize the notebook.";
-                    const fullPrompt = `\nYou are an expert Python notebook editor.\nBelow is a Jupyter notebook in JSON format and a user instruction.\nRewrite or append code to improve the notebook.\n\nRules:\n- Return only valid markdown or python code blocks.\n- Use \`\`\`python ... \`\`\` for code.\n- Use \`\`\`markdown ... \`\`\` for markdown.\n- Do not repeat the instruction or include explanations outside code fences.\n\nNotebook JSON:\n${JSON.stringify(notebookJSON, null, 2)}\n\nUser instruction:\n${userPrompt}\n  `;
-                    const response = await fetch("https://api-inference.huggingface.co/models/bigcode/starcoder2-3b", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                            // Add Authorization if needed: "Authorization": "Bearer YOUR_HF_TOKEN"
-                        },
-                        body: JSON.stringify({ inputs: fullPrompt })
-                    });
-                    const data = await response.json();
-                    const aiText = data[0]?.generated_text || "";
-                    const blocks = parseAIResponse(aiText);
-                    renderAIBlocks(blocks);
-                    if (!blocks.length) {
-                        alert("AI Touch returned no usable code. Try a simpler instruction.");
-                    }
-                }
-
-                function parseAIResponse(text) {
-                    const blocks = [];
-                    const regex = /```(python|markdown)?\n([\s\S]*?)```/g;
-                    let match;
-                    while ((match = regex.exec(text)) !== null) {
-                        blocks.push({
-                            type: match[1] === "markdown" ? "markdown" : "code",
-                            content: match[2].trim()
-                        });
-                    }
-                    return blocks;
-                }
-
-                function renderAIBlocks(blocks) {
-                    const preview = document.getElementById("codePreview");
-                    preview.innerHTML = "";
-                    blocks.forEach(block => {
-                        const div = document.createElement("div");
-                        div.className = block.type === "code" ? "code-block" : "markdown-block";
-                        div.textContent = block.content;
-                        preview.appendChild(div);
-                    });
-                }
-
-                function getCurrentNotebookJSON() {
-                    // Returns a minimal notebook JSON for AI Touch
-                    return {
-                        cells: notebookCells.map(cell => ({
-                            cell_type: cell.type === 'markdown' ? 'markdown' : 'code',
-                            metadata: {},
-                            source: cell.content.split('\n').map(line => line + '\n'),
-                            ...(cell.type === 'code' ? {
-                                    execution_count: null,
-                                    outputs: []
-                            } : {})
-                        })),
-                        metadata: {
-                            kernelspec: {
-                                display_name: 'Python 3',
-                                language: 'python',
-                                name: 'python3'
-                            },
-                            language_info: {
-                                name: 'python',
-                                version: '3.8.0'
-                            }
-                        },
-                        nbformat: 4,
-                        nbformat_minor: 4
-                    };
-                }
-
-                // --- Model Test Card Logic ---
-                function generateTest() {
-                    const n = document.getElementById("testNum").value;
-                    const src = document.getElementById("testSource").value;
-                    let code = `\n# --- Test Model ---\nnum_images = ${n}\nsource = "${src}"\n\nif source == "upload":\n    print("Upload images to test.")\nelif source == "dataset":\n    import random, glob\n    imgs = random.sample(glob.glob("data/images/*.jpg"), num_images)\nelif source == "url":\n    from urllib.request import urlretrieve\n    print("Download from URL here")\n\nfor img in imgs:\n    results = model(img)\n    results.show()\n`;
-                    appendCodeBlock(code);
-                }
-
-                function appendCodeBlock(code) {
-                    notebookCells.push({
-                        id: 'test_model_code_' + Date.now(),
-                        type: 'code',
-                        content: code,
-                        section: 'test_model'
-                    });
-                    renderNotebook();
-                }
-
-        // Code generation templates
-        const codeTemplates = {
-            project: (config) => {
-                const markdown = `# ${config.projectTitle}
-**Author:** ${config.author}
-**Generated:** ${new Date().toISOString().split('T')[0]}
-**Platform:** ${config.outputPlatform}
-
-This notebook was automatically generated using AutoVision Builder.`;
-                
-                const imports = `# Essential imports
-import torch
-import torchvision
-from torchvision import transforms, models, datasets
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader
-import numpy as np
-import matplotlib.pyplot as plt
-from pathlib import Path
-import warnings
-warnings.filterwarnings('ignore')
-
-# Check device
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(f'Using device: {device}')`;
-
-                return [
-                    { id: 'project_md', type: 'markdown', content: markdown, section: 'project' },
-                    { id: 'project_imports', type: 'code', content: imports, section: 'project' }
-                ];
-            },
-
-            task: (config) => {
-                const markdown = `## Task Configuration
-- **Task Type:** ${config.task}
-- **Subtask:** ${config.subtask}`;
-                
-                const code = `# Task configuration
-TASK_TYPE = '${config.task}'
-SUBTASK = '${config.subtask}'
-print(f'Task: {TASK_TYPE} - {SUBTASK}')`;
-
-                return [
-                    { id: 'task_md', type: 'markdown', content: markdown, section: 'task' },
-                    { id: 'task_config', type: 'code', content: code, section: 'task' }
-                ];
-            },
-
-            model: (config) => {
-                const markdown = `## Model Setup
-- **Framework:** ${config.framework}
-- **Model:** ${config.modelFamily} - ${config.modelName}
-- **Version:** ${config.modelVersion}
-- **Mode:** ${config.mode}
-- **Source:** ${config.modelSource}`;
-
-                let code = '';
-                if (config.modelSource === 'pretrained') {
-                    code = `# Load pretrained model
-from torchvision import models
-
-model = models.${config.modelName}(weights='IMAGENET1K_V1')
-num_features = model.fc.in_features
-
-# Modify final layer for your task
-num_classes = 10  # Change this to your number of classes
-model.fc = nn.Linear(num_features, num_classes)
-
-model = model.to(device)
-print(f'Model: {model.__class__.__name__}')
-print(f'Total parameters: {sum(p.numel() for p in model.parameters()):,}')`;
-                } else if (config.modelSource === 'custom') {
-                    code = `# Load model with custom weights
-from torchvision import models
-
-model = models.${config.modelName}(weights=None)
-num_features = model.fc.in_features
-num_classes = 10
-model.fc = nn.Linear(num_features, num_classes)
-
-# Load custom weights
-checkpoint = torch.load('${config.customWeightsPath}', map_location=device)
-model.load_state_dict(checkpoint['model_state_dict'])
-
-model = model.to(device)
-print('Custom weights loaded successfully')`;
-                } else {
-                    code = `# Initialize model from scratch
-from torchvision import models
-
-model = models.${config.modelName}(weights=None)
-num_features = model.fc.in_features
-num_classes = 10
-model.fc = nn.Linear(num_features, num_classes)
-
-model = model.to(device)
-print('Model initialized from scratch')`;
-                }
-
-                return [
-                    { id: 'model_md', type: 'markdown', content: markdown, section: 'model' },
-                    { id: 'model_setup', type: 'code', content: code, section: 'model' }
-                ];
-            },
-
-            preprocess: (config) => {
-                const markdown = `## Data Preprocessing
-- **Image Size:** ${config.imageSize}x${config.imageSize}
-- **Normalization:** ${config.normalize ? 'Enabled' : 'Disabled'}
-- **Augmentations:** ${config.augmentations ? 'Enabled' : 'Disabled'}`;
-
-                let transformsList = [`transforms.Resize((${config.imageSize}, ${config.imageSize}))`];
-                
-                if (config.augmentations) {
-                    transformsList.push(`transforms.RandomHorizontalFlip()`,
-                                       `transforms.ColorJitter(brightness=0.2, contrast=0.2)`);
-                }
-                
-                if (config.advancedAug) {
-                    transformsList.push(`transforms.RandomRotation(15)`,
-                                       `transforms.RandomAffine(degrees=0, translate=(0.1, 0.1))`);
-                }
-                
-                transformsList.push(`transforms.ToTensor()`);
-                
-                if (config.normalize) {
-                    transformsList.push(`transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])`);
-                }
-
-                const code = `# Data transforms
-train_transform = transforms.Compose([
-    ${transformsList.join(',\n    ')}
-])
-
-val_transform = transforms.Compose([
-    transforms.Resize((${config.imageSize}, ${config.imageSize})),
-    transforms.ToTensor(),
-    ${config.normalize ? `transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])` : ''}
-])
-
-print('Transforms configured')`;
-
-                return [
-                    { id: 'preprocess_md', type: 'markdown', content: markdown, section: 'preprocess' },
-                    { id: 'preprocess_code', type: 'code', content: code, section: 'preprocess' }
-                ];
-            },
-
-            dataset: (config) => {
-                const markdown = `## Dataset Configuration
-- **Source:** ${config.datasetSource}
-- **Format:** ${config.datasetFormat}
-- **Path:** ${config.datasetPath}
-- **Split:** ${config.splitRatio}`;
-
-                let code = '';
-                if (config.datasetSource === 'kaggle') {
-                    code = `# Download dataset from Kaggle
-!pip install -q kaggle
-from kaggle.api.kaggle_api_extended import KaggleApi
-
-api = KaggleApi()
-api.authenticate()
-
-# Download dataset
-api.dataset_download_files('${config.datasetPath}', path='./data', unzip=True)
-print('Dataset downloaded successfully')
-
-# Load dataset
-data_dir = Path('./data')`;
-                } else if (config.datasetSource === 'local') {
-                    code = `# Load local dataset
-from pathlib import Path
-
-data_dir = Path('${config.datasetPath}')
-print(f'Dataset path: {data_dir}')`;
-                } else if (config.datasetSource === 'huggingface') {
-                    code = `# Load from HuggingFace
-from datasets import load_dataset
-
-dataset = load_dataset('${config.datasetPath}')
-print('Dataset loaded from HuggingFace')`;
-                } else {
-                    code = `# Download from URL
-import urllib.request
-import zipfile
-
-url = '${config.datasetPath}'
-urllib.request.urlretrieve(url, 'dataset.zip')
-
-with zipfile.ZipFile('dataset.zip', 'r') as zip_ref:
-    zip_ref.extractall('./data')
-
-data_dir = Path('./data')
-print('Dataset downloaded and extracted')`;
-                }
-
-                code += `
-
-# Create datasets
-if '${config.datasetFormat}' == 'imagefolder':
-    train_dataset = datasets.ImageFolder(
-        root=data_dir / 'train',
-        transform=train_transform
-    )
-    val_dataset = datasets.ImageFolder(
-        root=data_dir / 'val',
-        transform=val_transform
-    )
-    
-    # Create data loaders
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=${config.batchSize || 16},
-        shuffle=True,
-        num_workers=4
-    )
-    val_loader = DataLoader(
-        val_dataset,
-        batch_size=${config.batchSize || 16},
-        shuffle=False,
-        num_workers=4
-    )
-    
-    print(f'Train samples: {len(train_dataset)}')
-    print(f'Val samples: {len(val_dataset)}')
-    print(f'Classes: {train_dataset.classes}')`;
-
-                return [
-                    { id: 'dataset_md', type: 'markdown', content: markdown, section: 'dataset' },
-                    { id: 'dataset_code', type: 'code', content: code, section: 'dataset' }
-                ];
-            },
-
-            training: (config) => {
-                const markdown = `## Training Configuration
-- **Epochs:** ${config.epochs}
-- **Batch Size:** ${config.batchSize}
-- **Learning Rate:** ${config.learningRate}
-- **Optimizer:** ${config.optimizer}
-- **Scheduler:** ${config.scheduler}
-- **Early Stopping:** ${config.earlyStopping ? 'Enabled' : 'Disabled'}`;
-
-                let optimizerCode = '';
-                if (config.optimizer === 'adam') {
-                    optimizerCode = `optimizer = optim.Adam(model.parameters(), lr=${config.learningRate})`;
-                } else if (config.optimizer === 'sgd') {
-                    optimizerCode = `optimizer = optim.SGD(model.parameters(), lr=${config.learningRate}, momentum=0.9)`;
-                } else {
-                    optimizerCode = `optimizer = optim.AdamW(model.parameters(), lr=${config.learningRate})`;
-                }
-
-                let schedulerCode = '';
-                if (config.scheduler === 'step') {
-                    schedulerCode = `\nscheduler = optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)`;
-                } else if (config.scheduler === 'cosine') {
-                    schedulerCode = `\nscheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=${config.epochs})`;
-                }
-
-                const code = `# Training setup
-criterion = nn.CrossEntropyLoss()
-${optimizerCode}${schedulerCode}
-
-# Training loop
-def train_epoch(model, dataloader, criterion, optimizer, device):
-    model.train()
-    running_loss = 0.0
-    correct = 0
-    total = 0
-    
-    for inputs, labels in dataloader:
-        inputs, labels = inputs.to(device), labels.to(device)
-        
-        optimizer.zero_grad()
-        outputs = model(inputs)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
-        
-        running_loss += loss.item()
-        _, predicted = outputs.max(1)
-        total += labels.size(0)
-        correct += predicted.eq(labels).sum().item()
-    
-    epoch_loss = running_loss / len(dataloader)
-    epoch_acc = 100. * correct / total
-    return epoch_loss, epoch_acc
-
-def validate(model, dataloader, criterion, device):
-    model.eval()
-    running_loss = 0.0
-    correct = 0
-    total = 0
-    
-    with torch.no_grad():
-        for inputs, labels in dataloader:
-            inputs, labels = inputs.to(device), labels.to(device)
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
-            
-            running_loss += loss.item()
-            _, predicted = outputs.max(1)
-            total += labels.size(0)
-            correct += predicted.eq(labels).sum().item()
-    
-    epoch_loss = running_loss / len(dataloader)
-    epoch_acc = 100. * correct / total
-    return epoch_loss, epoch_acc
-
-# Training
-best_acc = 0.0
-${config.earlyStopping ? 'patience = 5\npatience_counter = 0' : ''}
-history = {'train_loss': [], 'train_acc': [], 'val_loss': [], 'val_acc': []}
-
-for epoch in range(${config.epochs}):
-    train_loss, train_acc = train_epoch(model, train_loader, criterion, optimizer, device)
-    val_loss, val_acc = validate(model, val_loader, criterion, device)
-    
-    ${config.scheduler !== 'none' ? 'scheduler.step()' : ''}
-    
-    history['train_loss'].append(train_loss)
-    history['train_acc'].append(train_acc)
-    history['val_loss'].append(val_loss)
-    history['val_acc'].append(val_acc)
-    
-    print(f'Epoch {epoch+1}/${config.epochs}')
-    print(f'Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%')
-    print(f'Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.2f}%')
-    
-    # Save best model
-    if val_acc > best_acc:
-        best_acc = val_acc
-        torch.save({
-            'epoch': epoch,
-            'model_state_dict': model.state_dict(),
-            'optimizer_state_dict': optimizer.state_dict(),
-            'accuracy': best_acc,
-        }, 'best_model.pth')
-        print(f'Best model saved with accuracy: {best_acc:.2f}%')
-        ${config.earlyStopping ? 'patience_counter = 0' : ''}
-    ${config.earlyStopping ? `else:
-        patience_counter += 1
-        if patience_counter >= patience:
-            print('Early stopping triggered')
-            break` : ''}
-
-print(f'Training completed. Best accuracy: {best_acc:.2f}%')`;
-
-                return [
-                    { id: 'training_md', type: 'markdown', content: markdown, section: 'training' },
-                    { id: 'training_code', type: 'code', content: code, section: 'training' }
-                ];
-            },
-
-            evaluation: (config) => {
-                const markdown = `## Evaluation & Export
-- **Run Evaluation:** ${config.runEval ? 'Yes' : 'No'}
-- **Export Format:** ${config.exportFormat}
-- **Visualizations:** ${config.visualize ? 'Enabled' : 'Disabled'}
-- **Save Metrics:** ${config.saveMetrics ? 'Yes' : 'No'}`;
-
-                let code = '';
-                
-                if (config.runEval) {
-                    code += `# Load best model
-checkpoint = torch.load('best_model.pth')
-model.load_state_dict(checkpoint['model_state_dict'])
-
-# Evaluate on test set
-test_loss, test_acc = validate(model, val_loader, criterion, device)
-print(f'Test Accuracy: {test_acc:.2f}%')
-print(f'Test Loss: {test_loss:.4f}')
-
-# Confusion matrix
-from sklearn.metrics import confusion_matrix, classification_report
-import seaborn as sns
-
-y_true = []
-y_pred = []
-
-model.eval()
-with torch.no_grad():
-    for inputs, labels in val_loader:
-        inputs = inputs.to(device)
-        outputs = model(inputs)
-        _, predicted = outputs.max(1)
-        
-        y_true.extend(labels.numpy())
-        y_pred.extend(predicted.cpu().numpy())
-
-cm = confusion_matrix(y_true, y_pred)
-print('\\nClassification Report:')
-print(classification_report(y_true, y_pred))
-`;
-                }
-
-                if (config.visualize) {
-                    code += `
-# Plot training history
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))
-
-ax1.plot(history['train_loss'], label='Train Loss')
-ax1.plot(history['val_loss'], label='Val Loss')
-ax1.set_xlabel('Epoch')
-ax1.set_ylabel('Loss')
-ax1.set_title('Training and Validation Loss')
-ax1.legend()
-ax1.grid(True)
-
-ax2.plot(history['train_acc'], label='Train Accuracy')
-ax2.plot(history['val_acc'], label='Val Accuracy')
-ax2.set_xlabel('Epoch')
-ax2.set_ylabel('Accuracy (%)')
-ax2.set_title('Training and Validation Accuracy')
-ax2.legend()
-ax2.grid(True)
-
-plt.tight_layout()
-plt.savefig('training_history.png', dpi=300, bbox_inches='tight')
-plt.show()
-
-# Plot confusion matrix
-plt.figure(figsize=(10, 8))
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
-plt.title('Confusion Matrix')
-plt.ylabel('True Label')
-plt.xlabel('Predicted Label')
-plt.savefig('confusion_matrix.png', dpi=300, bbox_inches='tight')
-plt.show()
-
-# Visualize predictions
-def visualize_predictions(model, dataloader, num_images=9):
-    model.eval()
-    images, labels = next(iter(dataloader))
-    images, labels = images.to(device), labels.to(device)
-    
-    with torch.no_grad():
-        outputs = model(images)
-        _, predicted = outputs.max(1)
-    
-    fig, axes = plt.subplots(3, 3, figsize=(12, 12))
-    for idx, ax in enumerate(axes.flat):
-        if idx < num_images:
-            img = images[idx].cpu().numpy().transpose(1, 2, 0)
-            img = (img - img.min()) / (img.max() - img.min())
-            ax.imshow(img)
-            ax.set_title(f'True: {labels[idx].item()}\\nPred: {predicted[idx].item()}',
-                        color='green' if labels[idx]==predicted[idx] else 'red')
-            ax.axis('off')
-    
-    plt.tight_layout()
-    plt.savefig('predictions.png', dpi=300, bbox_inches='tight')
-    plt.show()
-
-visualize_predictions(model, val_loader)
-`;
-                }
-
-                if (config.saveMetrics) {
-                    code += `
-# Save metrics
-import json
-
-metrics = {
-    'test_accuracy': float(test_acc),
-    'test_loss': float(test_loss),
-    'best_val_accuracy': float(best_acc),
-    'epochs_trained': len(history['train_loss']),
-    'final_train_accuracy': float(history['train_acc'][-1]),
-    'final_val_accuracy': float(history['val_acc'][-1])
+    <div style="display:flex;gap:10px;align-items:center">
+      <div class="muted">Theme: system</div>
+      <button class="btn btn-ghost" onclick="openAbout()">About</button>
+    </div>
+  </header>
+
+  <div class="content">
+    <!-- LEFT -->
+    <aside class="left">
+      <!-- Project -->
+      <div class="card" id="card-project">
+        <div class="head">
+          <h3>Project Info</h3>
+          <div class="controls">
+            <button class="btn btn-prim" onclick="generateSection('project')">Generate</button>
+            <button class="btn btn-ghost" onclick="clearSection('project')">Clear</button>
+          </div>
+        </div>
+        <label>Project Title</label>
+        <input id="projectTitle" type="text" value="AutoVision_Project">
+        <label style="margin-top:8px">Author</label>
+        <input id="author" type="text" value="User">
+        <div style="display:flex;gap:10px;margin-top:10px">
+          <div style="flex:1">
+            <label>Notebook Style</label>
+            <select id="notebookStyle"><option value="minimal">Minimal</option><option value="educational">Educational</option><option value="technical">Technical</option></select>
+          </div>
+          <div style="width:150px">
+            <label>Output</label>
+            <select id="outputPlatform"><option value="download">Download</option><option value="colab">Colab</option><option value="kaggle">Kaggle</option></select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Task -->
+      <div class="card" id="card-task">
+        <div class="head">
+          <h3>Task Type</h3>
+          <div class="controls">
+            <button class="btn btn-prim" onclick="generateSection('task')">Generate</button>
+            <button class="btn btn-ghost" onclick="clearSection('task')">Clear</button>
+          </div>
+        </div>
+        <label>Task</label>
+        <select id="task" onchange="updateSubtasks()">
+          <option value="classification">Image Classification</option>
+          <option value="detection">Object Detection</option>
+          <option value="segmentation">Segmentation</option>
+          <option value="generation">Image Generation</option>
+          <option value="video">Video Analysis</option>
+        </select>
+        <label style="margin-top:8px">Subtask</label>
+        <select id="subtask"><option>single</option></select>
+      </div>
+
+      <!-- Model -->
+      <div class="card" id="card-model">
+        <div class="head">
+          <h3>Model Setup</h3>
+          <div class="controls">
+            <button class="btn btn-prim" onclick="generateSection('model')">Generate</button>
+            <button class="btn btn-ghost" onclick="clearSection('model')">Clear</button>
+          </div>
+        </div>
+
+        <label>Framework</label>
+        <select id="framework" onchange="updateModelNames()"><option value="pytorch">PyTorch</option><option value="tensorflow">TensorFlow</option><option value="ultralytics">Ultralytics</option></select>
+
+        <label style="margin-top:8px">Family</label>
+        <select id="modelFamily" onchange="updateModelNames()">
+          <option value="resnet">ResNet</option><option value="mobilenet">MobileNet</option><option value="efficientnet">EfficientNet</option><option value="yolo">YOLO</option><option value="vit">ViT</option><option value="diffusion">Diffusion</option>
+        </select>
+
+        <label style="margin-top:8px">Model</label>
+        <select id="modelName"></select>
+
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <div style="flex:1">
+            <label>Version</label>
+            <input id="modelVersion" type="text" value="v1">
+          </div>
+          <div style="width:120px">
+            <label>Mode</label>
+            <select id="mode"><option value="train">Train</option><option value="inference">Inference</option><option value="finetune">Fine-tune</option></select>
+          </div>
+        </div>
+
+        <label style="margin-top:8px">Model Source</label>
+        <select id="modelSource" onchange="toggleCustom()"><option value="pretrained">Pre-trained</option><option value="custom">Custom Weights</option><option value="scratch">From Scratch</option></select>
+        <div id="customGroup" style="margin-top:8px;display:none">
+          <label>Custom Weights Path</label>
+          <input id="customWeightsPath" type="text" placeholder="/path/to/weights.pth">
+        </div>
+      </div>
+
+      <!-- Preprocessing -->
+      <div class="card" id="card-preprocess">
+        <div class="head">
+          <h3>Preprocessing</h3>
+          <div class="controls">
+            <button class="btn btn-prim" onclick="generateSection('preprocess')">Generate</button>
+            <button class="btn btn-ghost" onclick="clearSection('preprocess')">Clear</button>
+          </div>
+        </div>
+        <label>Image Size</label>
+        <input id="imageSize" type="number" value="224">
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <div class="tog" onclick="toggle('normalize')"><div id="sw-normalize" class="switch on"><div class="dot"></div></div><div class="muted">Normalize</div></div>
+          <div class="tog" onclick="toggle('augment')"><div id="sw-augment" class="switch on"><div class="dot"></div></div><div class="muted">Augment</div></div>
+          <div class="tog" onclick="toggle('adv')"><div id="sw-adv" class="switch"><div class="dot"></div></div><div class="muted">Advanced</div></div>
+        </div>
+      </div>
+
+      <!-- Dataset -->
+      <div class="card" id="card-dataset">
+        <div class="head">
+          <h3>Dataset</h3>
+          <div class="controls">
+            <button class="btn btn-prim" onclick="generateSection('dataset')">Generate</button>
+            <button class="btn btn-ghost" onclick="clearSection('dataset')">Clear</button>
+          </div>
+        </div>
+        <label>Source</label>
+        <select id="datasetSource"><option value="kaggle">Kaggle</option><option value="local">Local</option><option value="hf">HuggingFace</option><option value="url">URL</option></select>
+        <label style="margin-top:8px">Format</label>
+        <select id="datasetFormat"><option value="imagefolder">ImageFolder</option><option value="coco">COCO</option><option value="yolo">YOLO</option><option value="csv">CSV</option></select>
+        <label style="margin-top:8px">Path / identifier</label>
+        <input id="datasetPath" type="text" placeholder="username/dataset or /path/to/data">
+        <label style="margin-top:8px">Split (train/val/test)</label>
+        <input id="split" type="text" value="0.8/0.1/0.1">
+      </div>
+
+      <!-- Training -->
+      <div class="card" id="card-training">
+        <div class="head">
+          <h3>Training</h3>
+          <div class="controls">
+            <button class="btn btn-prim" onclick="generateSection('training')">Generate</button>
+            <button class="btn btn-ghost" onclick="clearSection('training')">Clear</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1"><label>Epochs</label><input id="epochs" type="number" value="10"></div>
+          <div style="width:120px"><label>Batch</label><input id="batchSize" type="number" value="16"></div>
+        </div>
+        <label style="margin-top:8px">LR</label>
+        <input id="lr" type="text" value="0.001">
+        <label style="margin-top:8px">Optimizer</label>
+        <select id="optimizer"><option value="adam">Adam</option><option value="sgd">SGD</option><option value="adamw">AdamW</option></select>
+        <div style="margin-top:8px">
+          <label>Scheduler</label>
+          <select id="scheduler"><option value="none">None</option><option value="step">StepLR</option><option value="cosine">Cosine</option></select>
+        </div>
+      </div>
+
+      <!-- Evaluation / Integrations -->
+      <div class="card" id="card-eval">
+        <div class="head">
+          <h3>Eval & Integrations</h3>
+          <div class="controls">
+            <button class="btn btn-prim" onclick="generateSection('evaluation')">Generate</button>
+            <button class="btn btn-ghost" onclick="clearSection('evaluation')">Clear</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="tog" onclick="toggle('runEval')"><div id="sw-eval" class="switch on"><div class="dot"></div></div><div class="muted">Run Eval</div></div>
+          <div class="tog" onclick="toggle('visualize')"><div id="sw-vis" class="switch on"><div class="dot"></div></div><div class="muted">Visualize</div></div>
+        </div>
+        <div style="margin-top:8px">
+          <label>Export</label>
+          <select id="export"><option value="pt">.pt</option><option value="onnx">.onnx</option><option value="tflite">.tflite</option></select>
+        </div>
+      </div>
+
+      <!-- Global -->
+      <div class="card">
+        <div class="head"><h3>Global Controls</h3><div class="controls"></div></div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <button class="btn btn-ghost" onclick="resetSettings()">Reset Settings</button>
+          <button class="btn btn-ghost" onclick="clearAll()">Clear All</button>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-prim" style="flex:1" onclick="downloadNotebook()">📥 Download Notebook</button>
+          <button class="ai-btn" id="aiTouchBtn" onclick="aiTouch()">✨ AI Touch</button>
+        </div>
+        <div style="margin-top:10px;color:var(--muted);font-size:13px">AI Touch is optional — it polishes generated notebook cells. No model called by default.</div>
+      </div>
+    </aside>
+
+    <!-- RIGHT -->
+    <main class="right">
+      <div class="previewTop">
+        <div>
+          <strong style="font-size:15px">Notebook Preview</strong>
+          <div class="muted" style="margin-top:6px">Generated cells appear here. Click a cell to edit — edits are preserved.</div>
+        </div>
+        <div class="info muted">Cells: <span id="cellCount">0</span></div>
+      </div>
+
+      <div class="cells" id="cells"></div>
+
+      <div id="empty" class="empty" style="display:block">
+        <div style="font-size:16px;margin-bottom:6px">No cells yet</div>
+        <div class="muted">Use the Generate buttons on the left to add code/markdown. Edit inline, then download .ipynb.</div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+/* =========================
+   Notebook generator logic
+   ========================= */
+
+const notebookCells = []; // array of cell objects: {id,type,content,section,edited}
+const templates = {
+  project: (cfg)=>({
+    cells:[
+      {id:'project_md', type:'markdown', content:`# ${cfg.projectTitle}\n**Author:** ${cfg.author}\n**Generated:** ${new Date().toISOString().split('T')[0]}\n\nThis notebook was generated with AutoVision.`},
+      {id:'imports', type:'code', content:`# Essential imports\nimport torch\nimport torchvision\nfrom torchvision import transforms, models, datasets\nimport torch.nn as nn\nimport torch.optim as optim\nfrom torch.utils.data import DataLoader\nimport numpy as np\nimport matplotlib.pyplot as plt\nfrom pathlib import Path\n\n# device\ndevice = torch.device('cuda' if torch.cuda.is_available() else 'cpu')\nprint('Using', device)` }
+    ]
+  }),
+  task: (cfg)=>({
+    cells:[
+      {id:'task_md', type:'markdown', content:`## Task\n- Task: ${cfg.task}\n- Subtask: ${cfg.subtask}`},
+      {id:'task_cfg', type:'code', content:`# Task config\nTASK='${cfg.task}'\nSUBTASK='${cfg.subtask}'\nprint('Task:', TASK, SUBTASK)` }
+    ]
+  }),
+  model: (cfg)=>({
+    cells:[
+      {id:'model_md', type:'markdown', content:`## Model Setup\n- Framework: ${cfg.framework}\n- Model: ${cfg.modelName} (${cfg.modelVersion})\n- Source: ${cfg.modelSource}`},
+      {id:'model_code', type:'code', content: (() => {
+        if(cfg.modelSource==='pretrained'){
+          // lightweight default
+          if(cfg.framework==='pytorch'){
+            return `# Load pretrained model (PyTorch)\nfrom torchvision import models\nmodel = models.${cfg.modelName}(weights='IMAGENET1K_V1')\nnum_features = model.fc.in_features\nnum_classes = 10  # adjust\nmodel.fc = nn.Linear(num_features, num_classes)\nmodel = model.to(device)\nprint(model)\n`;
+          } else if(cfg.framework==='ultralytics'){
+            return `# YOLO style (placeholder)\n# from ultralytics import YOLO\n# model = YOLO('${cfg.modelName}.pt')\n# model.predict(...)\n`;
+          }
+        } else if(cfg.modelSource==='custom'){
+          return `# Load custom weights\nfrom torchvision import models\nmodel = models.${cfg.modelName}(weights=None)\nnum_features = model.fc.in_features\nmodel.fc = nn.Linear(num_features, 10)\ncheckpoint = torch.load('${cfg.customWeightsPath}', map_location=device)\nmodel.load_state_dict(checkpoint.get('model_state_dict', checkpoint))\nmodel = model.to(device)\nprint('Loaded custom weights')\n`;
+        }
+        return `# Initialize from scratch\nfrom torchvision import models\nmodel = models.${cfg.modelName}(weights=None)\nnum_features = model.fc.in_features\nmodel.fc = nn.Linear(num_features, 10)\nmodel = model.to(device)\nprint('Model initialized')\n`;
+      })() }
+    ]
+  }),
+  preprocess: (cfg)=>({
+    cells:[
+      {id:'pre_md', type:'markdown', content:`## Preprocessing\n- Image size: ${cfg.imageSize}\n- Normalize: ${cfg.normalize}\n- Augment: ${cfg.augment}\n- Advanced: ${cfg.adv}`},
+      {id:'pre_code', type:'code', content: (() => {
+        const lines = [];
+        lines.push(`# Transforms`);
+        lines.push(`from torchvision import transforms`);
+        lines.push(`train_transform = transforms.Compose([`);
+        lines.push(`  transforms.Resize((${cfg.imageSize}, ${cfg.imageSize})),`);
+        if(cfg.augment) {
+          lines.push(`  transforms.RandomHorizontalFlip(),`);
+          lines.push(`  transforms.ColorJitter(brightness=0.2, contrast=0.2),`);
+        }
+        if(cfg.adv) {
+          lines.push(`  transforms.RandomRotation(10),`);
+        }
+        lines.push(`  transforms.ToTensor(),`);
+        if(cfg.normalize) lines.push(`  transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225]),`);
+        lines.push(`])`);
+        lines.push(`\nval_transform = transforms.Compose([\n  transforms.Resize((${cfg.imageSize}, ${cfg.imageSize})),\n  transforms.ToTensor(),\n  ${cfg.normalize? "transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225]),": ""}\n])`);
+        return lines.join('\n');
+      })() }
+    ]
+  }),
+  dataset: (cfg)=>({
+    cells:[
+      {id:'data_md', type:'markdown', content:`## Dataset\n- Source: ${cfg.datasetSource}\n- Format: ${cfg.datasetFormat}\n- Path: ${cfg.datasetPath}\n- Split: ${cfg.split}`},
+      {id:'data_code', type:'code', content: (() => {
+        if(cfg.datasetSource==='kaggle'){
+          return `# Kaggle dataset (ensure kaggle.json exists)\n!pip install -q kaggle\nfrom kaggle.api.kaggle_api_extended import KaggleApi\napi = KaggleApi(); api.authenticate()\napi.dataset_download_files('${cfg.datasetPath}', path='./data', unzip=True)\ndata_dir = Path('data')\n`;
+        } else if(cfg.datasetSource==='hf'){
+          return `# HuggingFace dataset\nfrom datasets import load_dataset\ndataset = load_dataset('${cfg.datasetPath}')\n`;
+        } else if(cfg.datasetSource==='url'){
+          return `# Download and extract\nimport urllib.request, zipfile\nurl='${cfg.datasetPath}'\nurllib.request.urlretrieve(url,'dataset.zip')\nwith zipfile.ZipFile('dataset.zip','r') as z: z.extractall('data')\n`;
+        } else {
+          return `# Local dataset\nfrom pathlib import Path\ndata_dir = Path('${cfg.datasetPath}')\n`;
+        }
+      })() }
+    ]
+  }),
+  training: (cfg)=>({
+    cells:[
+      {id:'train_md', type:'markdown', content:`## Training\n- Epochs: ${cfg.epochs}\n- Batch: ${cfg.batchSize}\n- LR: ${cfg.lr}\n- Optimizer: ${cfg.optimizer}\n- Scheduler: ${cfg.scheduler}`},
+      {id:'train_code', type:'code', content: (() => {
+        return `# Training loop (simple)\ncriterion = nn.CrossEntropyLoss()\noptimizer = optim.Adam(model.parameters(), lr=${cfg.lr})\n# dataloaders: train_loader, val_loader expected\nfor epoch in range(${cfg.epochs}):\n  model.train()\n  for xb, yb in train_loader:\n    xb,yb = xb.to(device), yb.to(device)\n    optimizer.zero_grad()\n    out = model(xb)\n    loss = criterion(out,yb)\n    loss.backward()\n    optimizer.step()\n  print('Epoch', epoch+1)\n`;
+      })() }
+    ]
+  }),
+  evaluation: (cfg)=>({
+    cells:[
+      {id:'eval_md', type:'markdown', content:`## Evaluation & Export\n- RunEval: ${cfg.runEval}\n- Visualize: ${cfg.visualize}\n- Export: ${cfg.export}`},
+      {id:'eval_code', type:'code', content: (() => {
+        const parts = [];
+        if(cfg.runEval) {
+          parts.push(`# Evaluate (using val_loader)\nfrom sklearn.metrics import classification_report\nmodel.eval()\n# iterate and compute metrics...`);
+        }
+        if(cfg.visualize) {
+          parts.push(`# Visualize predictions\n# visualize code here`);
+        }
+        if(cfg.export==='onnx') {
+          parts.push(`# Export to ONNX\ndummy = torch.randn(1,3,${cfg.imageSize},${cfg.imageSize}).to(device)\ntorch.onnx.export(model, dummy, 'model.onnx')`);
+        } else if(cfg.export==='pt') {
+          parts.push(`torch.save({'model_state_dict': model.state_dict()}, 'best_model.pth')\nprint('Saved best_model.pth')`);
+        }
+        return parts.join('\n\n');
+      })() }
+    ]
+  })
+};
+
+/* Utilities */
+function getConfig(){
+  return {
+    projectTitle: document.getElementById('projectTitle').value.trim() || 'AutoVision_Project',
+    author: document.getElementById('author').value.trim() || 'User',
+    notebookStyle: document.getElementById('notebookStyle').value,
+    outputPlatform: document.getElementById('outputPlatform').value,
+
+    task: document.getElementById('task').value,
+    subtask: document.getElementById('subtask').value,
+
+    framework: document.getElementById('framework').value,
+    modelFamily: document.getElementById('modelFamily').value,
+    modelName: document.getElementById('modelName').value,
+    modelVersion: document.getElementById('modelVersion').value,
+    mode: document.getElementById('mode').value,
+    modelSource: document.getElementById('modelSource').value,
+    customWeightsPath: document.getElementById('customWeightsPath').value,
+
+    imageSize: Number(document.getElementById('imageSize').value) || 224,
+    normalize: document.getElementById('sw-normalize').classList.contains('on'),
+    augment: document.getElementById('sw-augment').classList.contains('on'),
+    adv: document.getElementById('sw-adv').classList.contains('on'),
+
+    datasetSource: document.getElementById('datasetSource').value,
+    datasetFormat: document.getElementById('datasetFormat').value,
+    datasetPath: document.getElementById('datasetPath').value,
+    split: document.getElementById('split').value,
+
+    epochs: Number(document.getElementById('epochs').value) || 10,
+    batchSize: Number(document.getElementById('batchSize').value) || 16,
+    lr: document.getElementById('lr').value,
+    optimizer: document.getElementById('optimizer').value,
+    scheduler: document.getElementById('scheduler').value,
+
+    runEval: document.getElementById('sw-eval').classList.contains('on'),
+    visualize: document.getElementById('sw-vis').classList.contains('on'),
+    export: document.getElementById('export').value
+  };
 }
 
-with open('metrics.json', 'w') as f:
-    json.dump(metrics, f, indent=4)
+/* Render UI cells */
+function renderCells(){
+  const container = document.getElementById('cells');
+  container.innerHTML='';
+  if(notebookCells.length===0){
+    document.getElementById('empty').style.display='block';
+  } else {
+    document.getElementById('empty').style.display='none';
+  }
+  notebookCells.forEach((c, idx)=>{
+    const el = document.createElement('div');
+    el.className = 'cell' + (c.type==='markdown' ? ' markdown' : '');
+    el.setAttribute('data-id', c.id);
+    el.setAttribute('contenteditable', c.editable? 'true' : 'true'); // editable always
+    // toolbar
+    const toolbar = document.createElement('div'); toolbar.className='toolbar';
+    const btnSave = document.createElement('button'); btnSave.className='tool'; btnSave.textContent='Save'; btnSave.onclick=(e)=>{ e.stopPropagation(); saveCellEdit(c.id); };
+    const btnRegen = document.createElement('button'); btnRegen.className='tool'; btnRegen.textContent='Regenerate'; btnRegen.onclick=(e)=>{ e.stopPropagation(); regenerateCell(c.section,c.id); };
+    const btnRemove = document.createElement('button'); btnRemove.className='tool'; btnRemove.textContent='Remove'; btnRemove.onclick=(e)=>{ e.stopPropagation(); removeCell(c.id); };
+    toolbar.appendChild(btnSave); toolbar.appendChild(btnRegen); toolbar.appendChild(btnRemove);
+    el.appendChild(toolbar);
 
-print('\\nMetrics saved to metrics.json')
-`;
-                }
+    const label = document.createElement('div'); label.className='label'; label.textContent = c.type === 'markdown' ? 'Markdown' : 'Code';
+    el.appendChild(label);
 
-                if (config.exportFormat === 'onnx') {
-                    code += `
-# Export to ONNX
-dummy_input = torch.randn(1, 3, ${config.imageSize || 224}, ${config.imageSize || 224}).to(device)
-torch.onnx.export(model, dummy_input, 'model.onnx', 
-                  input_names=['input'], output_names=['output'],
-                  dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}})
-print('Model exported to model.onnx')
-`;
-                } else if (config.exportFormat === 'tflite') {
-                    code += `
-# Export to TFLite (requires conversion)
-print('Note: Convert PyTorch model to TFLite using ONNX intermediate format')
-print('1. Export to ONNX (done above)')
-print('2. Use onnx-tf to convert ONNX to TensorFlow')
-print('3. Use TFLiteConverter to convert to TFLite')
-`;
-                }
+    const pre = document.createElement('pre'); pre.style.marginTop='26px';
+    pre.textContent = c.content;
+    pre.onclick = ()=>{ el.setAttribute('contenteditable','true'); };
+    // when user edits in place, mark edited flag
+    pre.addEventListener('input', ()=>{ markEdited(c.id, el.innerText || el.textContent); });
+    // set initial content
+    el.appendChild(pre);
+    container.appendChild(el);
+  });
+  document.getElementById('cellCount').textContent = notebookCells.length;
+}
 
-                return [
-                    { id: 'eval_md', type: 'markdown', content: markdown, section: 'evaluation' },
-                    { id: 'eval_code', type: 'code', content: code, section: 'evaluation' }
-                ];
-            },
+/* helpers: find index by id */
+function findIndexById(id){ return notebookCells.findIndex(x => x.id===id); }
 
-            integrations: (config) => {
-                const markdown = `## Integrations
-- **Kaggle API:** ${config.kaggleAPI ? 'Enabled' : 'Disabled'}
-- **WandB/TensorBoard:** ${config.wandb ? 'Enabled' : 'Disabled'}
-- **HuggingFace Hub:** ${config.huggingface ? 'Enabled' : 'Disabled'}`;
+/* mark edited: update content and flag */
+function markEdited(id, newContent){
+  const i = findIndexById(id); if(i<0) return;
+  notebookCells[i].content = newContent;
+  notebookCells[i].edited = true;
+  renderCells();
+}
 
-                let code = '';
+/* save cell edit manually (re-reads DOM) */
+function saveCellEdit(id){
+  const idx = findIndexById(id); if(idx<0) return;
+  const el = document.querySelector(`[data-id="${id}"]`);
+  if(!el) return;
+  const text = el.innerText || el.textContent;
+  notebookCells[idx].content = text;
+  notebookCells[idx].edited = true;
+  renderCells();
+}
 
-                if (config.kaggleAPI) {
-                    code += `# Kaggle API setup
-!pip install -q kaggle
+/* regenerate a single cell from templates (if exists) - only if not edited */
+function regenerateCell(section, cellId){
+  const cfg = getConfig();
+  if(!templates[section]) return;
+  const newCells = templates[section](cfg).cells;
+  const found = newCells.find(nc=>nc.id===cellId);
+  if(!found) return alert('Template cell not available for regen');
+  const idx = findIndexById(cellId);
+  if(idx>=0 && notebookCells[idx].edited){
+    if(!confirm('This cell has local edits. Overwrite?')) return;
+  }
+  const newObj = {...found, section, edited:false};
+  if(idx>=0) notebookCells.splice(idx,1,newObj);
+  else notebookCells.push(newObj);
+  renderCells();
+}
 
-# Upload kaggle.json to /root/.kaggle/
-# Or use Kaggle Secrets in Kaggle Notebooks
-print('Kaggle API configured')
+/* remove cell */
+function removeCell(id){
+  const idx = findIndexById(id); if(idx<0) return;
+  notebookCells.splice(idx,1);
+  renderCells();
+}
 
-`;
-                }
+/* Clear section */
+function clearSection(section){
+  for(let i=notebookCells.length-1;i>=0;i--){ if(notebookCells[i].section===section) notebookCells.splice(i,1); }
+  renderCells();
+}
 
-                if (config.wandb) {
-                    code += `# WandB integration
-!pip install -q wandb
+/* Generate section - preserves edited cells in same section (match by id) */
+function generateSection(section){
+  const cfg = getConfig();
+  if(!templates[section]) { alert('No template for '+section); return; }
+  const newCells = templates[section](cfg).cells.map(c=>({ ...c, section, edited:false }));
+  // remove non-edited cells of that section, but keep edited ones
+  const keep = notebookCells.filter(c => !(c.section===section && !c.edited));
+  // merge: for each new cell, if there's an edited with same id, keep edited instead of new
+  newCells.forEach(nc=>{
+    const editedExisting = notebookCells.find(c=>c.id===nc.id && c.section===section && c.edited);
+    if(editedExisting){
+      keep.push(editedExisting);
+    } else {
+      keep.push(nc);
+    }
+  });
+  // also keep other sections
+  const others = notebookCells.filter(c=>c.section!==section);
+  // rebuild: keep others + keep (ensuring order: others first by original order, then new of section)
+  const combined = [];
+  // preserve original order of all previous cells for sections not regenerated
+  notebookCells.forEach(c=>{
+    if(c.section!==section) combined.push(c);
+  });
+  // then append section cells in newCells order, but prefer editedExisting
+  newCells.forEach(nc=>{
+    const editedExisting = notebookCells.find(c=>c.id===nc.id && c.section===section && c.edited);
+    combined.push(editedExisting ? editedExisting : nc);
+  });
+  // replace
+  notebookCells.length=0; notebookCells.push(...combined);
+  renderCells();
+}
 
-import wandb
+/* reset / clear all */
+function resetSettings(){
+  document.getElementById('projectTitle').value='AutoVision_Project';
+  document.getElementById('author').value='User';
+  document.getElementById('notebookStyle').value='minimal';
+  document.getElementById('outputPlatform').value='download';
 
-# Initialize wandb
-wandb.init(project='autovision-project', name='${Date.now()}')
+  document.getElementById('task').value='classification'; updateSubtasks();
+  document.getElementById('framework').value='pytorch';
+  document.getElementById('modelFamily').value='resnet'; updateModelNames();
+  document.getElementById('modelVersion').value='v1'; document.getElementById('mode').value='train';
+  document.getElementById('modelSource').value='pretrained'; toggleCustom();
 
-# Log metrics during training
-# wandb.log({'train_loss': train_loss, 'train_acc': train_acc})
+  document.getElementById('imageSize').value='224';
+  document.getElementById('sw-normalize').classList.add('on');
+  document.getElementById('sw-augment').classList.add('on');
+  document.getElementById('sw-adv').classList.remove('on');
 
-print('WandB initialized')
+  document.getElementById('datasetSource').value='kaggle';
+  document.getElementById('datasetFormat').value='imagefolder';
+  document.getElementById('datasetPath').value='';
+  document.getElementById('split').value='0.8/0.1/0.1';
 
-`;
-                }
+  document.getElementById('epochs').value='10';
+  document.getElementById('batchSize').value='16';
+  document.getElementById('lr').value='0.001';
+  document.getElementById('optimizer').value='adam';
+  document.getElementById('scheduler').value='none';
 
-                if (config.huggingface) {
-                    code += `# HuggingFace Hub integration
-!pip install -q huggingface_hub
+  document.getElementById('sw-eval').classList.add('on');
+  document.getElementById('sw-vis').classList.add('on');
+  document.getElementById('export').value='pt';
+}
 
-from huggingface_hub import HfApi, upload_file
+function clearAll(){
+  if(!confirm('Clear all cells and reset settings?')) return;
+  notebookCells.length=0;
+  resetSettings();
+  renderCells();
+}
 
-# Upload model to HuggingFace Hub
-# api = HfApi()
-# api.upload_file(
-#     path_or_fileobj='best_model.pth',
-#     path_in_repo='model.pth',
-#     repo_id='your-username/your-model',
-#     token='your-token'
-# )
+/* download notebook -> nbformat */
+function downloadNotebook(){
+  if(notebookCells.length===0){ alert('No cells generated'); return; }
+  const cfg = getConfig();
+  const nb = {
+    nbformat:4, nbformat_minor:5,
+    metadata: {
+      kernelspec: {name:'python3', display_name:'Python 3'},
+      language_info: {name:'python', version:'3.x'}
+    },
+    cells: notebookCells.map(c=>{
+      const src = (c.content||'').split('\n').map(l=> l + '\n');
+      if(c.type==='markdown') return {cell_type:'markdown', metadata:{}, source: src};
+      return {cell_type:'code', execution_count: null, metadata:{}, outputs:[], source: src};
+    })
+  };
+  const blob = new Blob([JSON.stringify(nb,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url;
+  a.download = `AutoVision_${cfg.task}_${cfg.modelName || 'model'}_${Date.now()}.ipynb`;
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
 
-print('HuggingFace Hub integration ready')
-`;
-                }
+/* small helpers for toggles */
+function toggle(id){
+  const el = document.getElementById('sw-'+id);
+  if(!el) return;
+  el.classList.toggle('on');
+}
 
-                if (!code) {
-                    code = '# No integrations enabled\nprint("No external integrations configured")';
-                }
+/* update subtasks based on task */
+function updateSubtasks(){
+  const t = document.getElementById('task').value;
+  const sub = document.getElementById('subtask');
+  const map = {
+    classification:['single','multi'],
+    detection:['yolo','rcnn'],
+    segmentation:['semantic','instance'],
+    generation:['diffusion','gan'],
+    video:['action','tracking']
+  };
+  sub.innerHTML='';
+  (map[t]||['default']).forEach(s=>{
+    const opt = document.createElement('option'); opt.value=s; opt.textContent=s; sub.appendChild(opt);
+  });
+}
 
-                return [
-                    { id: 'integrations_md', type: 'markdown', content: markdown, section: 'integrations' },
-                    { id: 'integrations_code', type: 'code', content: code, section: 'integrations' }
-                ];
-            }
-        };
+/* model name list */
+function updateModelNames(){
+  const family = document.getElementById('modelFamily').value;
+  const sel = document.getElementById('modelName');
+  const map = {
+    resnet:['resnet18','resnet34','resnet50'],
+    mobilenet:['mobilenet_v2','mobilenet_v3_small'],
+    efficientnet:['efficientnet_b0','efficientnet_b1'],
+    yolo:['yolov8n','yolov8s','yolov8m'],
+    vit:['vit_b_16','vit_l_16'],
+    diffusion:['stable-diffusion-v1-5','sdxl']
+  };
+  sel.innerHTML='';
+  (map[family]||['default']).forEach(m=>{ const o=document.createElement('option'); o.value=m; o.textContent=m; sel.appendChild(o); });
+}
 
-        // Get configuration from inputs
-        function getConfig() {
-            return {
-                // Project
-                projectTitle: document.getElementById('projectTitle').value,
-                author: document.getElementById('author').value,
-                notebookStyle: document.getElementById('notebookStyle').value,
-                outputPlatform: document.getElementById('outputPlatform').value,
-                
-                // Task
-                task: document.getElementById('task').value,
-                subtask: document.getElementById('subtask').value,
-                
-                // Model
-                framework: document.getElementById('framework').value,
-                modelFamily: document.getElementById('modelFamily').value,
-                modelName: document.getElementById('modelName').value,
-                modelVersion: document.getElementById('modelVersion').value,
-                mode: document.getElementById('mode').value,
-                modelSource: document.getElementById('modelSource').value,
-                customWeightsPath: document.getElementById('customWeightsPath').value,
-                
-                // Preprocessing
-                imageSize: document.getElementById('imageSize').value,
-                normalize: document.getElementById('normalize').checked,
-                augmentations: document.getElementById('augmentations').checked,
-                advancedAug: document.getElementById('advancedAug').checked,
-                
-                // Dataset
-                datasetSource: document.getElementById('datasetSource').value,
-                datasetFormat: document.getElementById('datasetFormat').value,
-                datasetPath: document.getElementById('datasetPath').value,
-                splitRatio: document.getElementById('splitRatio').value,
-                
-                // Training
-                epochs: document.getElementById('epochs').value,
-                batchSize: document.getElementById('batchSize').value,
-                learningRate: document.getElementById('learningRate').value,
-                optimizer: document.getElementById('optimizer').value,
-                earlyStopping: document.getElementById('earlyStopping').checked,
-                scheduler: document.getElementById('scheduler').value,
-                
-                // Evaluation
-                runEval: document.getElementById('runEval').checked,
-                exportFormat: document.getElementById('exportFormat').value,
-                visualize: document.getElementById('visualize').checked,
-                saveMetrics: document.getElementById('saveMetrics').checked,
-                
-                // Integrations
-                kaggleAPI: document.getElementById('kaggleAPI').checked,
-                wandb: document.getElementById('wandb').checked,
-                huggingface: document.getElementById('huggingface').checked
-            };
-        }
+/* toggle custom weights UI */
+function toggleCustom(){
+  const src = document.getElementById('modelSource').value;
+  document.getElementById('customGroup').style.display = src==='custom' ? 'block' : 'none';
+}
 
-        // Generate section
-        function generateSection(section) {
-            const config = getConfig();
-            
-            // Remove existing cells from this section
-            notebookCells = notebookCells.filter(cell => cell.section !== section);
-            
-            // Generate new cells
-            if (codeTemplates[section]) {
-                const newCells = codeTemplates[section](config);
-                notebookCells.push(...newCells);
-            }
-            
-            renderNotebook();
-        }
+/* AI Touch - lightweight local polish (stub) */
+function aiTouch(){
+  if(notebookCells.length===0){ alert('Generate some cells first'); return; }
+  const instr = prompt('AI Touch — paste short instruction (example: "add clearer comments and variable names")','Polish comments and add helpful notes');
+  if(instr===null) return;
+  // Simple heuristic "polish": for each code cell, prepend a comment summarizing instruction and wrap long lines
+  for(let i=0;i<notebookCells.length;i++){
+    const c = notebookCells[i];
+    if(c.type==='code'){
+      if(c.edited) continue; // respect edits
+      const header = `# AI Touch: ${instr}\n# Generated: ${new Date().toISOString()}\n`;
+      // simple polish: ensure there is a newline after header
+      c.content = header + c.content;
+      c.edited = false; // still not user-edited, but we've modified it via AI Touch
+    } else if(c.type==='markdown'){
+      // add extra friendly sentence
+      c.content = c.content + `\n\n> AI Touch note: ${instr}`;
+    }
+  }
+  alert('AI Touch applied (local polish). Replace this with real AI call if desired.');
+  renderCells();
+}
 
-        // Clear section
-        function clearSection(section) {
-            notebookCells = notebookCells.filter(cell => cell.section !== section);
-            renderNotebook();
-        }
+/* regenerate entire section (utility) */
+function regenSection(section){
+  generateSection(section);
+}
 
-        // Reset settings
-        function resetSettings() {
-            document.getElementById('projectTitle').value = 'AutoVision_Project';
-            document.getElementById('author').value = 'User';
-            document.getElementById('notebookStyle').value = 'minimal';
-            document.getElementById('outputPlatform').value = 'download';
-            
-            document.getElementById('task').value = 'classification';
-            document.getElementById('subtask').value = 'single';
-            
-            document.getElementById('framework').value = 'pytorch';
-            document.getElementById('modelFamily').value = 'resnet';
-            document.getElementById('modelName').value = 'resnet18';
-            document.getElementById('modelVersion').value = 'v1';
-            document.getElementById('mode').value = 'train';
-            document.getElementById('modelSource').value = 'pretrained';
-            
-            document.getElementById('imageSize').value = '224';
-            document.getElementById('normalize').checked = true;
-            document.getElementById('augmentations').checked = true;
-            document.getElementById('advancedAug').checked = false;
-            
-            document.getElementById('datasetSource').value = 'kaggle';
-            document.getElementById('datasetFormat').value = 'imagefolder';
-            document.getElementById('datasetPath').value = '';
-            document.getElementById('splitRatio').value = '0.8/0.1/0.1';
-            
-            document.getElementById('epochs').value = '10';
-            document.getElementById('batchSize').value = '16';
-            document.getElementById('learningRate').value = '0.001';
-            document.getElementById('optimizer').value = 'adam';
-            document.getElementById('earlyStopping').checked = true;
-            document.getElementById('scheduler').value = 'none';
-            
-            document.getElementById('runEval').checked = true;
-            document.getElementById('exportFormat').value = 'pt';
-            document.getElementById('visualize').checked = true;
-            document.getElementById('saveMetrics').checked = true;
-            
-            document.getElementById('kaggleAPI').checked = true;
-            document.getElementById('wandb').checked = false;
-            document.getElementById('huggingface').checked = false;
-            
-            toggleCustomWeights();
-        }
+/* regenerate if present on load */
+function init(){
+  updateSubtasks(); updateModelNames(); renderCells();
+  resetSettings();
+}
 
-        // Clear all
-        function clearAll() {
-            notebookCells = [];
-            renderNotebook();
-            resetSettings();
-        }
+/* expose functions for buttons */
+window.generateSection = generateSection;
+window.clearSection = clearSection;
+window.resetSettings = resetSettings;
+window.clearAll = clearAll;
+window.downloadNotebook = downloadNotebook;
+window.toggleCustom = toggleCustom;
+window.updateSubtasks = updateSubtasks;
+window.updateModelNames = updateModelNames;
+window.aiTouch = aiTouch;
 
-        // Render notebook preview
-        function renderNotebook() {
-            const preview = document.getElementById('notebookPreview');
-            
-            if (notebookCells.length === 0) {
-                preview.innerHTML = `
-                    <div class="empty-preview">
-                        <svg fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-                        </svg>
-                        <h3>No cells generated yet</h3>
-                        <p>Configure settings and click Generate buttons to build your notebook</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            let html = '';
-            notebookCells.forEach(cell => {
-                const cellClass = cell.type === 'markdown' ? 'markdown' : 'code';
-                html += `
-                    <div class="notebook-cell ${cellClass}">
-                        <div class="cell-label">${cell.type === 'markdown' ? 'Markdown' : 'Code'}</div>
-                        <div class="cell-content">${escapeHtml(cell.content)}</div>
-                    </div>
-                `;
-            });
-            preview.innerHTML = html;
-        }
+/* about */
+function openAbout(){ alert('AutoVision Notebook Generator — refined single-file UI. AI Touch is a local stub.'); }
 
-        // Download notebook
-        function downloadNotebook() {
-            if (notebookCells.length === 0) {
-                alert('No cells to download! Generate some code first.');
-                return;
-            }
-            
-            const config = getConfig();
-            const notebook = {
-                cells: notebookCells.map(cell => ({
-                    cell_type: cell.type === 'markdown' ? 'markdown' : 'code',
-                    metadata: {},
-                    source: cell.content.split('\n').map(line => line + '\n'),
-                    ...(cell.type === 'code' ? {
-                        execution_count: null,
-                        outputs: []
-                    } : {})
-                })),
-                metadata: {
-                    kernelspec: {
-                        display_name: 'Python 3',
-                        language: 'python',
-                        name: 'python3'
-                    },
-                    language_info: {
-                        name: 'python',
-                        version: '3.8.0'
-                    }
-                },
-                nbformat: 4,
-                nbformat_minor: 4
-            };
-            
-            const blob = new Blob([JSON.stringify(notebook, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `AutoVision_${config.task}_${config.modelName}_${Date.now()}.ipynb`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-        // Helper functions
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function toggleCustomWeights() {
-            const source = document.getElementById('modelSource').value;
-            const customGroup = document.getElementById('customWeightsGroup');
-            customGroup.style.display = source === 'custom' ? 'block' : 'none';
-        }
-
-        function updateSubtasks() {
-            const task = document.getElementById('task').value;
-            const subtaskSelect = document.getElementById('subtask');
-            
-            const subtasks = {
-                classification: ['single', 'multi'],
-                detection: ['yolo', 'rcnn', 'ssd'],
-                segmentation: ['semantic', 'instance', 'panoptic'],
-                generation: ['gan', 'diffusion', 'vae'],
-                video: ['action', 'tracking', 'temporal']
-            };
-            
-            subtaskSelect.innerHTML = '';
-            (subtasks[task] || ['default']).forEach(st => {
-                const option = document.createElement('option');
-                option.value = st;
-                option.textContent = st.charAt(0).toUpperCase() + st.slice(1);
-                subtaskSelect.appendChild(option);
-            });
-        }
-
-        function updateModels() {
-            updateModelNames();
-        }
-
-        function updateModelNames() {
-            const family = document.getElementById('modelFamily').value;
-            const modelSelect = document.getElementById('modelName');
-            
-            const models = {
-                resnet: ['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152'],
-                mobilenet: ['mobilenet_v2', 'mobilenet_v3_small', 'mobilenet_v3_large'],
-                efficientnet: ['efficientnet_b0', 'efficientnet_b1', 'efficientnet_b2', 'efficientnet_b3'],
-                yolo: ['yolov5s', 'yolov5m', 'yolov5l', 'yolov8n', 'yolov8s', 'yolov8m'],
-                vit: ['vit_b_16', 'vit_b_32', 'vit_l_16', 'vit_l_32'],
-                diffusion: ['stable-diffusion-v1-5', 'stable-diffusion-2-1', 'dall-e']
-            };
-            
-            modelSelect.innerHTML = '';
-            (models[family] || ['default']).forEach(model => {
-                const option = document.createElement('option');
-                option.value = model;
-                option.textContent = model;
-                modelSelect.appendChild(option);
-            });
-        }
-
-        // Initialize
-        updateSubtasks();
-        updateModelNames();
-    </script>
+init();
+</script>
 </body>
 </html>
