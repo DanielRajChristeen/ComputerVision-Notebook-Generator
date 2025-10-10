@@ -323,6 +323,21 @@
             background: #5568d3;
         }
 
+        select, option {
+            background: var(--panel);
+            color: var(--text);
+        }
+        :root {
+            --bg:#ffeaea;
+            --panel:#fff0f0;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg:#2b0000;
+                --panel:#3a0000;
+            }
+        }
+
         .right-panel::-webkit-scrollbar-track {
             background: #2d2d2d;
         }
@@ -348,6 +363,28 @@
         <div class="main-content">
             <!-- LEFT PANEL -->
             <div class="left-panel">
+                                <!-- AI Touch Section -->
+                                <div class="card section">
+                                    <h3>AI Touch ✨</h3>
+                                    <label for="aiPrompt">Instruction</label>
+                                    <textarea id="aiPrompt" placeholder="Refine and optimize the notebook."></textarea>
+                                    <button class="btn btn-generate" onclick="runAITouch()">Run AI Touch</button>
+                                    <div id="codePreview" style="margin-top:10px;"></div>
+                                </div>
+
+                                <!-- Model Test Card -->
+                                <div class="card section">
+                                    <h3>🧪 Test Model</h3>
+                                    <label>Number of Images</label>
+                                    <input id="testNum" type="number" value="3" min="1">
+                                    <label>Source</label>
+                                    <select id="testSource">
+                                        <option value="upload">Upload & Detect</option>
+                                        <option value="dataset">Dataset Random</option>
+                                        <option value="url">From URL</option>
+                                    </select>
+                                    <button class="btn btn-generate" onclick="generateTest()">Generate</button>
+                                </div>
                 <!-- Project Info Section -->
                 <div class="section">
                     <div class="section-header">
@@ -693,6 +730,98 @@
     <script>
         // Notebook state management
         let notebookCells = [];
+
+                // --- AI Touch Logic ---
+                async function runAITouch() {
+                    const notebookJSON = getCurrentNotebookJSON();
+                    const userPrompt = document.getElementById("aiPrompt").value || "Refine and optimize the notebook.";
+                    const fullPrompt = `\nYou are an expert Python notebook editor.\nBelow is a Jupyter notebook in JSON format and a user instruction.\nRewrite or append code to improve the notebook.\n\nRules:\n- Return only valid markdown or python code blocks.\n- Use \`\`\`python ... \`\`\` for code.\n- Use \`\`\`markdown ... \`\`\` for markdown.\n- Do not repeat the instruction or include explanations outside code fences.\n\nNotebook JSON:\n${JSON.stringify(notebookJSON, null, 2)}\n\nUser instruction:\n${userPrompt}\n  `;
+                    const response = await fetch("https://api-inference.huggingface.co/models/bigcode/starcoder2-3b", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                            // Add Authorization if needed: "Authorization": "Bearer YOUR_HF_TOKEN"
+                        },
+                        body: JSON.stringify({ inputs: fullPrompt })
+                    });
+                    const data = await response.json();
+                    const aiText = data[0]?.generated_text || "";
+                    const blocks = parseAIResponse(aiText);
+                    renderAIBlocks(blocks);
+                    if (!blocks.length) {
+                        alert("AI Touch returned no usable code. Try a simpler instruction.");
+                    }
+                }
+
+                function parseAIResponse(text) {
+                    const blocks = [];
+                    const regex = /```(python|markdown)?\n([\s\S]*?)```/g;
+                    let match;
+                    while ((match = regex.exec(text)) !== null) {
+                        blocks.push({
+                            type: match[1] === "markdown" ? "markdown" : "code",
+                            content: match[2].trim()
+                        });
+                    }
+                    return blocks;
+                }
+
+                function renderAIBlocks(blocks) {
+                    const preview = document.getElementById("codePreview");
+                    preview.innerHTML = "";
+                    blocks.forEach(block => {
+                        const div = document.createElement("div");
+                        div.className = block.type === "code" ? "code-block" : "markdown-block";
+                        div.textContent = block.content;
+                        preview.appendChild(div);
+                    });
+                }
+
+                function getCurrentNotebookJSON() {
+                    // Returns a minimal notebook JSON for AI Touch
+                    return {
+                        cells: notebookCells.map(cell => ({
+                            cell_type: cell.type === 'markdown' ? 'markdown' : 'code',
+                            metadata: {},
+                            source: cell.content.split('\n').map(line => line + '\n'),
+                            ...(cell.type === 'code' ? {
+                                    execution_count: null,
+                                    outputs: []
+                            } : {})
+                        })),
+                        metadata: {
+                            kernelspec: {
+                                display_name: 'Python 3',
+                                language: 'python',
+                                name: 'python3'
+                            },
+                            language_info: {
+                                name: 'python',
+                                version: '3.8.0'
+                            }
+                        },
+                        nbformat: 4,
+                        nbformat_minor: 4
+                    };
+                }
+
+                // --- Model Test Card Logic ---
+                function generateTest() {
+                    const n = document.getElementById("testNum").value;
+                    const src = document.getElementById("testSource").value;
+                    let code = `\n# --- Test Model ---\nnum_images = ${n}\nsource = "${src}"\n\nif source == "upload":\n    print("Upload images to test.")\nelif source == "dataset":\n    import random, glob\n    imgs = random.sample(glob.glob("data/images/*.jpg"), num_images)\nelif source == "url":\n    from urllib.request import urlretrieve\n    print("Download from URL here")\n\nfor img in imgs:\n    results = model(img)\n    results.show()\n`;
+                    appendCodeBlock(code);
+                }
+
+                function appendCodeBlock(code) {
+                    notebookCells.push({
+                        id: 'test_model_code_' + Date.now(),
+                        type: 'code',
+                        content: code,
+                        section: 'test_model'
+                    });
+                    renderNotebook();
+                }
 
         // Code generation templates
         const codeTemplates = {
@@ -1422,7 +1551,6 @@ print('HuggingFace Hub integration ready')
                     </div>
                 `;
             });
-            
             preview.innerHTML = html;
         }
 
