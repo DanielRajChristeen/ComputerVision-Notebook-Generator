@@ -3,16 +3,21 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>AutoVision Notebook Generator — Refined</title>
+<title>AutoVision Notebook Generator — v1</title>
 <style>
+
   :root{
-    --bg:#ffffff; --panel:#f7f7f8; --card:#ffffff; --muted:#666; --text:#0b0b0b;
+    --bg:#ffeaea;      /* light mode pale red */
+    --panel:#fff0f0;   /* panel lighter pale red */
+    --card:#ffffff; --muted:#666; --text:#0b0b0b;
     --accent: #b91c1c; /* red accent */
     --code-bg:#111111; --code-text:#e6e6e6; --border: #e6e6e6;
   }
   @media (prefers-color-scheme: dark){
     :root{
-      --bg:#0b0b0b; --panel:#111216; --card:#0f1113; --muted:#9aa3ac; --text:#e6eef3;
+      --bg:#2b0000;     /* dark red background */
+      --panel:#3a0000;  /* darker panel */
+      --card:#0f1113; --muted:#9aa3ac; --text:#e6eef3;
       --accent: #ff6666;
       --code-bg:#0b0b0b; --code-text:#e6e6e6; --border: #202226;
     }
@@ -30,6 +35,26 @@
     box-shadow: 0 10px 40px rgba(2,6,23,0.12);
     background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
   }
+
+  /* utility classes */
+  .flex { display:flex }
+  .flex1 { flex:1 }
+  .gap8 { gap:8px }
+  .gap10 { gap:10px }
+  .center { align-items:center }
+  .mt6 { margin-top:6px }
+  .mt8 { margin-top:8px }
+  .mt10 { margin-top:10px }
+  .mt14 { margin-top:14px }
+  .w150 { width:150px }
+  .w120 { width:120px }
+  .hidden { display:none }
+  .mb10 { margin-bottom:10px }
+  .show { display:block }
+  .strong15 { font-size:15px }
+  .strong16 { font-size:16px }
+  .mb6 { margin-bottom:6px }
+  .small13 { font-size:13px }
 
   header{
     padding:22px 28px; display:flex; gap:16px; align-items:center; border-bottom:1px solid var(--border);
@@ -56,6 +81,8 @@
     width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border);
     background:transparent; color:var(--text); font-size:14px;
   }
+  select, option { background: var(--panel); color: var(--text); }
+  select:focus { outline:none; }
   .row{ display:flex; gap:10px }
   .small{ width:140px }
 
@@ -81,8 +108,6 @@
   .empty { text-align:center; color:var(--muted); padding:60px 20px; border-radius:8px; border:1px dashed var(--border) }
 
   footer.controls { display:flex; gap:10px; align-items:center; margin-top:8px; }
-  .ai-btn { background:transparent; border:1px solid var(--accent); color:var(--accent); padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:700 }
-  .danger{ background:#e53935; color:white }
 
   /* small responsiveness */
   @media (max-width:880px){
@@ -95,11 +120,11 @@
 <body>
 <div class="app">
   <header>
-    <div style="flex:1">
+    <div class="flex1">
       <h1>AutoVision Notebook Generator</h1>
-      <p style="margin-top:6px" class="muted">Interactive notebook composer — choose, refine, download. AI Touch optional.</p>
+      <p class="muted mt6">Interactive notebook composer — choose, refine, download.</p>
     </div>
-    <div style="display:flex;gap:10px;align-items:center">
+    <div class="flex gap10 center">
       <div class="muted">Theme: system</div>
       <button class="btn btn-ghost" onclick="openAbout()">About</button>
     </div>
@@ -117,18 +142,18 @@
             <button class="btn btn-ghost" onclick="clearSection('project')">Clear</button>
           </div>
         </div>
-        <label>Project Title</label>
-        <input id="projectTitle" type="text" value="AutoVision_Project">
-        <label style="margin-top:8px">Author</label>
-        <input id="author" type="text" value="User">
-        <div style="display:flex;gap:10px;margin-top:10px">
-          <div style="flex:1">
-            <label>Notebook Style</label>
-            <select id="notebookStyle"><option value="minimal">Minimal</option><option value="educational">Educational</option><option value="technical">Technical</option></select>
+        <label for="projectTitle">Project Title</label>
+        <input id="projectTitle" type="text" value="AutoVision_Project" title="Project Title" placeholder="Project title">
+        <label for="author" class="mt8">Author</label>
+        <input id="author" type="text" value="User" title="Author name" placeholder="Author name">
+        <div class="flex gap10 mt10">
+          <div class="flex1">
+            <label for="notebookStyle">Notebook Style</label>
+            <select id="notebookStyle" title="Notebook style"><option value="minimal">Minimal</option><option value="educational">Educational</option><option value="technical">Technical</option></select>
           </div>
-          <div style="width:150px">
-            <label>Output</label>
-            <select id="outputPlatform"><option value="download">Download</option><option value="colab">Colab</option><option value="kaggle">Kaggle</option></select>
+          <div class="w150">
+            <label for="outputPlatform">Output</label>
+            <select id="outputPlatform" title="Output platform"><option value="download">Download</option><option value="colab">Colab</option><option value="kaggle">Kaggle</option></select>
           </div>
         </div>
       </div>
@@ -142,16 +167,16 @@
             <button class="btn btn-ghost" onclick="clearSection('task')">Clear</button>
           </div>
         </div>
-        <label>Task</label>
-        <select id="task" onchange="updateSubtasks()">
+        <label for="task">Task</label>
+        <select id="task" onchange="updateSubtasks()" title="Task type">
           <option value="classification">Image Classification</option>
           <option value="detection">Object Detection</option>
           <option value="segmentation">Segmentation</option>
           <option value="generation">Image Generation</option>
           <option value="video">Video Analysis</option>
         </select>
-        <label style="margin-top:8px">Subtask</label>
-        <select id="subtask"><option>single</option></select>
+        <label for="subtask" class="mt8">Subtask</label>
+        <select id="subtask" title="Subtask"><option>single</option></select>
       </div>
 
       <!-- Model -->
@@ -164,33 +189,33 @@
           </div>
         </div>
 
-        <label>Framework</label>
-        <select id="framework" onchange="updateModelNames()"><option value="pytorch">PyTorch</option><option value="tensorflow">TensorFlow</option><option value="ultralytics">Ultralytics</option></select>
+  <label for="framework">Framework</label>
+  <select id="framework" onchange="updateModelNames()" title="Framework"><option value="pytorch">PyTorch</option><option value="tensorflow">TensorFlow</option><option value="ultralytics">Ultralytics</option></select>
 
-        <label style="margin-top:8px">Family</label>
-        <select id="modelFamily" onchange="updateModelNames()">
+        <label for="modelFamily" class="mt8">Family</label>
+        <select id="modelFamily" onchange="updateModelNames()" title="Model family">
           <option value="resnet">ResNet</option><option value="mobilenet">MobileNet</option><option value="efficientnet">EfficientNet</option><option value="yolo">YOLO</option><option value="vit">ViT</option><option value="diffusion">Diffusion</option>
         </select>
 
-        <label style="margin-top:8px">Model</label>
-        <select id="modelName"></select>
+  <label for="modelName" class="mt8">Model</label>
+  <select id="modelName" title="Model name"></select>
 
-        <div style="display:flex;gap:10px;margin-top:8px">
-          <div style="flex:1">
-            <label>Version</label>
-            <input id="modelVersion" type="text" value="v1">
+  <div class="flex gap10 mt8">
+          <div class="flex1">
+            <label for="modelVersion">Version</label>
+            <input id="modelVersion" type="text" value="v1" title="Model version" placeholder="v1">
           </div>
-          <div style="width:120px">
-            <label>Mode</label>
-            <select id="mode"><option value="train">Train</option><option value="inference">Inference</option><option value="finetune">Fine-tune</option></select>
+          <div class="w120">
+            <label for="mode">Mode</label>
+            <select id="mode" title="Mode"><option value="train">Train</option><option value="inference">Inference</option><option value="finetune">Fine-tune</option></select>
           </div>
         </div>
 
-        <label style="margin-top:8px">Model Source</label>
-        <select id="modelSource" onchange="toggleCustom()"><option value="pretrained">Pre-trained</option><option value="custom">Custom Weights</option><option value="scratch">From Scratch</option></select>
-        <div id="customGroup" style="margin-top:8px;display:none">
-          <label>Custom Weights Path</label>
-          <input id="customWeightsPath" type="text" placeholder="/path/to/weights.pth">
+        <label for="modelSource" class="mt8">Model Source</label>
+        <select id="modelSource" onchange="toggleCustom()" title="Model source"><option value="pretrained">Pre-trained</option><option value="custom">Custom Weights</option><option value="scratch">From Scratch</option></select>
+  <div id="customGroup" class="mt8 hidden">
+          <label for="customWeightsPath">Custom Weights Path</label>
+          <input id="customWeightsPath" type="text" placeholder="/path/to/weights.pth" title="Custom weights path">
         </div>
       </div>
 
@@ -203,9 +228,9 @@
             <button class="btn btn-ghost" onclick="clearSection('preprocess')">Clear</button>
           </div>
         </div>
-        <label>Image Size</label>
-        <input id="imageSize" type="number" value="224">
-        <div style="display:flex;gap:8px;margin-top:8px">
+        <label for="imageSize">Image Size</label>
+        <input id="imageSize" type="number" value="224" title="Image size">
+        <div class="flex gap8 mt8">
           <div class="tog" onclick="toggle('normalize')"><div id="sw-normalize" class="switch on"><div class="dot"></div></div><div class="muted">Normalize</div></div>
           <div class="tog" onclick="toggle('augment')"><div id="sw-augment" class="switch on"><div class="dot"></div></div><div class="muted">Augment</div></div>
           <div class="tog" onclick="toggle('adv')"><div id="sw-adv" class="switch"><div class="dot"></div></div><div class="muted">Advanced</div></div>
@@ -221,14 +246,14 @@
             <button class="btn btn-ghost" onclick="clearSection('dataset')">Clear</button>
           </div>
         </div>
-        <label>Source</label>
-        <select id="datasetSource"><option value="kaggle">Kaggle</option><option value="local">Local</option><option value="hf">HuggingFace</option><option value="url">URL</option></select>
-        <label style="margin-top:8px">Format</label>
-        <select id="datasetFormat"><option value="imagefolder">ImageFolder</option><option value="coco">COCO</option><option value="yolo">YOLO</option><option value="csv">CSV</option></select>
-        <label style="margin-top:8px">Path / identifier</label>
-        <input id="datasetPath" type="text" placeholder="username/dataset or /path/to/data">
-        <label style="margin-top:8px">Split (train/val/test)</label>
-        <input id="split" type="text" value="0.8/0.1/0.1">
+        <label for="datasetSource">Source</label>
+        <select id="datasetSource" title="Dataset source"><option value="kaggle">Kaggle</option><option value="local">Local</option><option value="hf">HuggingFace</option><option value="url">URL</option></select>
+        <label for="datasetFormat" class="mt8">Format</label>
+        <select id="datasetFormat" title="Dataset format"><option value="imagefolder">ImageFolder</option><option value="coco">COCO</option><option value="yolo">YOLO</option><option value="csv">CSV</option></select>
+        <label for="datasetPath" class="mt8">Path / identifier</label>
+        <input id="datasetPath" type="text" placeholder="username/dataset or /path/to/data" title="Dataset path or identifier">
+        <label for="split" class="mt8">Split (train/val/test)</label>
+        <input id="split" type="text" value="0.8/0.1/0.1" title="Train/val/test split">
       </div>
 
       <!-- Training -->
@@ -240,17 +265,17 @@
             <button class="btn btn-ghost" onclick="clearSection('training')">Clear</button>
           </div>
         </div>
-        <div style="display:flex;gap:8px">
-          <div style="flex:1"><label>Epochs</label><input id="epochs" type="number" value="10"></div>
-          <div style="width:120px"><label>Batch</label><input id="batchSize" type="number" value="16"></div>
+        <div class="flex gap8">
+          <div class="flex1"><label for="epochs">Epochs</label><input id="epochs" type="number" value="10" title="Epochs"></div>
+          <div class="w120"><label for="batchSize">Batch</label><input id="batchSize" type="number" value="16" title="Batch size"></div>
         </div>
-        <label style="margin-top:8px">LR</label>
-        <input id="lr" type="text" value="0.001">
-        <label style="margin-top:8px">Optimizer</label>
-        <select id="optimizer"><option value="adam">Adam</option><option value="sgd">SGD</option><option value="adamw">AdamW</option></select>
-        <div style="margin-top:8px">
-          <label>Scheduler</label>
-          <select id="scheduler"><option value="none">None</option><option value="step">StepLR</option><option value="cosine">Cosine</option></select>
+        <label for="lr" class="mt8">LR</label>
+        <input id="lr" type="text" value="0.001" title="Learning rate">
+        <label for="optimizer" class="mt8">Optimizer</label>
+        <select id="optimizer" title="Optimizer"><option value="adam">Adam</option><option value="sgd">SGD</option><option value="adamw">AdamW</option></select>
+        <div class="mt8">
+          <label for="scheduler">Scheduler</label>
+          <select id="scheduler" title="Scheduler"><option value="none">None</option><option value="step">StepLR</option><option value="cosine">Cosine</option></select>
         </div>
       </div>
 
@@ -263,28 +288,46 @@
             <button class="btn btn-ghost" onclick="clearSection('evaluation')">Clear</button>
           </div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center">
+        <div class="flex gap8 center">
           <div class="tog" onclick="toggle('runEval')"><div id="sw-eval" class="switch on"><div class="dot"></div></div><div class="muted">Run Eval</div></div>
           <div class="tog" onclick="toggle('visualize')"><div id="sw-vis" class="switch on"><div class="dot"></div></div><div class="muted">Visualize</div></div>
         </div>
-        <div style="margin-top:8px">
-          <label>Export</label>
-          <select id="export"><option value="pt">.pt</option><option value="onnx">.onnx</option><option value="tflite">.tflite</option></select>
+  <div class="mt8">
+          <label for="export">Export</label>
+          <select id="export" title="Export format"><option value="pt">.pt</option><option value="onnx">.onnx</option><option value="tflite">.tflite</option></select>
         </div>
+      </div>
+
+      <!-- Test Model -->
+      <div class="card" id="card-test">
+        <div class="head">
+          <h3>Test Model</h3>
+          <div class="controls">
+            <button class="btn btn-prim" onclick="generateSection('test')">Generate</button>
+            <button class="btn btn-ghost" onclick="clearSection('test')">Clear</button>
+          </div>
+        </div>
+        <label for="testNum">Number of Images</label>
+        <input type="number" id="testNum" value="1" min="1" title="Number of images">
+        <label for="testSource" class="mt8">Source</label>
+        <select id="testSource" title="Test image source">
+          <option value="upload">Upload</option>
+          <option value="dataset">Random Dataset</option>
+          <option value="url">URL</option>
+        </select>
       </div>
 
       <!-- Global -->
       <div class="card">
         <div class="head"><h3>Global Controls</h3><div class="controls"></div></div>
-        <div style="display:flex;gap:8px;margin-bottom:10px">
+  <div class="flex gap8 mt10 mb10">
           <button class="btn btn-ghost" onclick="resetSettings()">Reset Settings</button>
           <button class="btn btn-ghost" onclick="clearAll()">Clear All</button>
         </div>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-prim" style="flex:1" onclick="downloadNotebook()">📥 Download Notebook</button>
-          <button class="ai-btn" id="aiTouchBtn" onclick="aiTouch()">✨ AI Touch</button>
+        <div class="flex gap8">
+          <button class="btn btn-prim flex1" onclick="downloadNotebook()">📥 Download Notebook</button>
         </div>
-        <div style="margin-top:10px;color:var(--muted);font-size:13px">AI Touch is optional — it polishes generated notebook cells. No model called by default.</div>
+        <div class="mt10 muted small13">This release: rule-based generator only. AI Touch will be added in upcoming releases </div>
       </div>
     </aside>
 
@@ -292,16 +335,16 @@
     <main class="right">
       <div class="previewTop">
         <div>
-          <strong style="font-size:15px">Notebook Preview</strong>
-          <div class="muted" style="margin-top:6px">Generated cells appear here. Click a cell to edit — edits are preserved.</div>
+          <strong class="strong15">Notebook Preview</strong>
+          <div class="muted mt6">Generated cells appear here. Click a cell to edit — edits are preserved.</div>
         </div>
         <div class="info muted">Cells: <span id="cellCount">0</span></div>
       </div>
 
       <div class="cells" id="cells"></div>
 
-      <div id="empty" class="empty" style="display:block">
-        <div style="font-size:16px;margin-bottom:6px">No cells yet</div>
+      <div id="empty" class="empty show">
+        <div class="strong16 mb6">No cells yet</div>
         <div class="muted">Use the Generate buttons on the left to add code/markdown. Edit inline, then download .ipynb.</div>
       </div>
     </main>
@@ -309,113 +352,233 @@
 </div>
 
 <script>
-/* =========================
-   Notebook generator logic
-   ========================= */
 
 const notebookCells = []; // array of cell objects: {id,type,content,section,edited}
+
+/* Templates */
 const templates = {
-  project: (cfg)=>({
-    cells:[
-      {id:'project_md', type:'markdown', content:`# ${cfg.projectTitle}\n**Author:** ${cfg.author}\n**Generated:** ${new Date().toISOString().split('T')[0]}\n\nThis notebook was generated with AutoVision.`},
-      {id:'imports', type:'code', content:`# Essential imports\nimport torch\nimport torchvision\nfrom torchvision import transforms, models, datasets\nimport torch.nn as nn\nimport torch.optim as optim\nfrom torch.utils.data import DataLoader\nimport numpy as np\nimport matplotlib.pyplot as plt\nfrom pathlib import Path\n\n# device\ndevice = torch.device('cuda' if torch.cuda.is_available() else 'cpu')\nprint('Using', device)` }
+  project: (cfg) => {
+    const bashCells = [];
+
+    // base system
+    bashCells.push({
+      id: "bash_base",
+      type: "code",
+      language: "bash",
+      content: `# System basics\n!pip install --upgrade pip\napt-get update -qq && apt-get install -y git wget unzip > /dev/null\n`,
+    });
+
+    // framework-specific installers handled separately (we also inject when generating model),
+    // but keep dataset / utils here as well:
+    if (cfg.datasetSource === "kaggle") {
+      bashCells.push({ id: "bash_kaggle", type: "code", language: "bash", content: "!pip install kaggle -q\n" });
+    }
+    if (cfg.datasetSource === "hf") {
+      bashCells.push({ id: "bash_hf", type: "code", language: "bash", content: "!pip install datasets -q\n" });
+    }
+    if (cfg.visualize) {
+      bashCells.push({ id: "bash_viz", type: "code", language: "bash", content: "!pip install matplotlib opencv-python tqdm -q\n" });
+    }
+
+    const pythonImports = {
+      id: "imports",
+      type: "code",
+      language: "python",
+      content: `# Python imports\nimport torch, torchvision\nfrom torchvision import transforms, models, datasets\nimport torch.nn as nn, torch.optim as optim\nfrom torch.utils.data import DataLoader\nimport numpy as np, matplotlib.pyplot as plt\nfrom pathlib import Path\n\ndevice = torch.device('cuda' if torch.cuda.is_available() else 'cpu')\nprint('Using', device)\n`,
+    };
+
+    return {
+      cells: [
+        {
+          id: "project_md",
+          type: "markdown",
+          content: `# ${cfg.projectTitle}\n**Author:** ${cfg.author}\n**Generated:** ${new Date().toISOString().split("T")[0]}\n\nThis notebook was generated with AutoVision.`,
+        },
+        ...bashCells,
+        pythonImports,
+      ],
+    };
+  },
+
+  task: (cfg) => ({
+    cells: [
+      { id: 'task_md', type: 'markdown', content: `## Task\n- Task: ${cfg.task}\n- Subtask: ${cfg.subtask}` },
+      { id: 'task_cfg', type: 'code', content: `# Task config\nTASK='${cfg.task}'\nSUBTASK='${cfg.subtask}'\nprint('Task:', TASK, SUBTASK)` }
     ]
   }),
-  task: (cfg)=>({
-    cells:[
-      {id:'task_md', type:'markdown', content:`## Task\n- Task: ${cfg.task}\n- Subtask: ${cfg.subtask}`},
-      {id:'task_cfg', type:'code', content:`# Task config\nTASK='${cfg.task}'\nSUBTASK='${cfg.subtask}'\nprint('Task:', TASK, SUBTASK)` }
-    ]
-  }),
-  model: (cfg)=>({
-    cells:[
-      {id:'model_md', type:'markdown', content:`## Model Setup\n- Framework: ${cfg.framework}\n- Model: ${cfg.modelName} (${cfg.modelVersion})\n- Source: ${cfg.modelSource}`},
-      {id:'model_code', type:'code', content: (() => {
-        if(cfg.modelSource==='pretrained'){
-          // lightweight default
-          if(cfg.framework==='pytorch'){
-            return `# Load pretrained model (PyTorch)\nfrom torchvision import models\nmodel = models.${cfg.modelName}(weights='IMAGENET1K_V1')\nnum_features = model.fc.in_features\nnum_classes = 10  # adjust\nmodel.fc = nn.Linear(num_features, num_classes)\nmodel = model.to(device)\nprint(model)\n`;
-          } else if(cfg.framework==='ultralytics'){
-            return `# YOLO style (placeholder)\n# from ultralytics import YOLO\n# model = YOLO('${cfg.modelName}.pt')\n# model.predict(...)\n`;
+
+  model: (cfg) => ({
+    cells: [
+      {
+        id: "model_md",
+        type: "markdown",
+        content: `## Model Setup \n- Framework: ${cfg.framework}\n- Model: ${cfg.modelName} (${cfg.modelVersion})\n- Source: ${cfg.modelSource}`,
+      },
+      {
+        id: "model_code",
+        type: "code",
+        content: (() => {
+          const fw = cfg.framework;
+          const src = cfg.modelSource;
+          const name = cfg.modelName;
+          const custom = cfg.customWeightsPath || "";
+
+          // PyTorch
+          if (fw === "pytorch") {
+            if (src === "pretrained") {
+              return `# Load pretrained ${name} (PyTorch)\nfrom torchvision import models\nimport torch.nn as nn\n\nmodel = models.${name}(weights='IMAGENET1K_V1')\n# adjust final layer for your num_classes\ntry:\n  num_features = model.fc.in_features\n  model.fc = nn.Linear(num_features, 10)\nexcept Exception:\n  # some models use classifier instead\n  try:\n    in_f = model.classifier[-1].in_features\n    model.classifier[-1] = nn.Linear(in_f, 10)\n  except Exception:\n    pass\nmodel = model.to(device)\nprint(model)`;
+            }
+            if (src === "custom") {
+              return `# Load custom weights for ${name}\nfrom torchvision import models\nimport torch.nn as nn, torch\n\nmodel = models.${name}(weights=None)\n# adapt final layer as needed\ncheckpoint = torch.load("${custom}", map_location=device)\nmodel.load_state_dict(checkpoint.get('model_state_dict', checkpoint))\nmodel = model.to(device)\nprint("Loaded custom weights from ${custom}")`;
+            }
+            return `# Initialize ${name} from scratch (PyTorch)\nfrom torchvision import models\nimport torch.nn as nn\n\nmodel = models.${name}(weights=None)\n# adapt final layer\nmodel = model.to(device)\nprint("Model initialized from scratch")`;
           }
-        } else if(cfg.modelSource==='custom'){
-          return `# Load custom weights\nfrom torchvision import models\nmodel = models.${cfg.modelName}(weights=None)\nnum_features = model.fc.in_features\nmodel.fc = nn.Linear(num_features, 10)\ncheckpoint = torch.load('${cfg.customWeightsPath}', map_location=device)\nmodel.load_state_dict(checkpoint.get('model_state_dict', checkpoint))\nmodel = model.to(device)\nprint('Loaded custom weights')\n`;
-        }
-        return `# Initialize from scratch\nfrom torchvision import models\nmodel = models.${cfg.modelName}(weights=None)\nnum_features = model.fc.in_features\nmodel.fc = nn.Linear(num_features, 10)\nmodel = model.to(device)\nprint('Model initialized')\n`;
-      })() }
+
+          // TensorFlow
+          if (fw === "tensorflow") {
+            if (src === "pretrained") {
+              return `# Load pretrained ${name} (TensorFlow/Keras)\nimport tensorflow as tf\nbase = tf.keras.applications.${name}(weights='imagenet', include_top=False, pooling='avg')\nx = tf.keras.layers.Dense(10, activation='softmax')(base.output)\nmodel = tf.keras.Model(inputs=base.input, outputs=x)\nmodel.summary()`;
+            }
+            if (src === "custom") {
+              return `# Load custom weights (TensorFlow)\nimport tensorflow as tf\nmodel = tf.keras.models.load_model("${custom}")\nmodel.summary()`;
+            }
+            return `# Initialize ${name} from scratch (TensorFlow)\nimport tensorflow as tf\nbase = tf.keras.applications.${name}(weights=None, include_top=False, pooling='avg')\nx = tf.keras.layers.Dense(10, activation='softmax')(base.output)\nmodel = tf.keras.Model(inputs=base.input, outputs=x)\nmodel.summary()`;
+          }
+
+          // Ultralytics / YOLO
+          if (fw === "ultralytics" || cfg.modelFamily === "yolo") {
+            if (src === "pretrained") {
+              return `# Load pretrained YOLO model (Ultralytics)\nfrom ultralytics import YOLO\n\n# For Ultralytics, model name like 'yolov8n' refers to a prebuilt model\nmodel = YOLO("${name}.pt")\n# run a quick predict on folder 'data/images'\nresults = model.predict(source="data/images", show=False, save=True)\nprint("Predictions saved to:", getattr(results[0], 'save_dir', 'n/a'))`;
+            }
+            if (src === "custom") {
+              return `# Load YOLO model with custom weights\nfrom ultralytics import YOLO\n\nmodel = YOLO("${custom}")\nresults = model.predict(source="data/images", show=False, save=True)\nprint("Custom weights loaded from:", "${custom}")`;
+            }
+            return `# Train YOLO model from scratch\nfrom ultralytics import YOLO\n\nmodel = YOLO("${name}.yaml")\nmodel.train(data="data.yaml", epochs=100, imgsz=640)\nprint("YOLO training complete")`;
+          }
+
+          return "# Framework not recognized. Please check your selections.";
+        })(),
+      },
+    ],
+  }),
+
+  preprocess: (cfg) => ({
+    cells: [
+      { id: 'pre_md', type: 'markdown', content: `## Preprocessing\n- Image size: ${cfg.imageSize}\n- Normalize: ${cfg.normalize}\n- Augment: ${cfg.augment}\n- Advanced: ${cfg.adv}` },
+      {
+        id: 'pre_code', type: 'code', content: (() => {
+          const lines = [];
+          lines.push(`# Transforms`);
+          lines.push(`from torchvision import transforms`);
+          lines.push(`train_transform = transforms.Compose([`);
+          lines.push(`  transforms.Resize((${cfg.imageSize}, ${cfg.imageSize})),`);
+          if (cfg.augment) {
+            lines.push(`  transforms.RandomHorizontalFlip(),`);
+            lines.push(`  transforms.ColorJitter(brightness=0.2, contrast=0.2),`);
+          }
+          if (cfg.adv) {
+            lines.push(`  transforms.RandomRotation(10),`);
+          }
+          lines.push(`  transforms.ToTensor(),`);
+          if (cfg.normalize) lines.push(`  transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225]),`);
+          lines.push(`])`);
+          lines.push(`\nval_transform = transforms.Compose([\n  transforms.Resize((${cfg.imageSize}, ${cfg.imageSize})),\n  transforms.ToTensor(),\n  ${cfg.normalize ? "transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225])," : ""}\n])`);
+          return lines.join('\n');
+        })()
+      }
     ]
   }),
-  preprocess: (cfg)=>({
-    cells:[
-      {id:'pre_md', type:'markdown', content:`## Preprocessing\n- Image size: ${cfg.imageSize}\n- Normalize: ${cfg.normalize}\n- Augment: ${cfg.augment}\n- Advanced: ${cfg.adv}`},
-      {id:'pre_code', type:'code', content: (() => {
-        const lines = [];
-        lines.push(`# Transforms`);
-        lines.push(`from torchvision import transforms`);
-        lines.push(`train_transform = transforms.Compose([`);
-        lines.push(`  transforms.Resize((${cfg.imageSize}, ${cfg.imageSize})),`);
-        if(cfg.augment) {
-          lines.push(`  transforms.RandomHorizontalFlip(),`);
-          lines.push(`  transforms.ColorJitter(brightness=0.2, contrast=0.2),`);
-        }
-        if(cfg.adv) {
-          lines.push(`  transforms.RandomRotation(10),`);
-        }
-        lines.push(`  transforms.ToTensor(),`);
-        if(cfg.normalize) lines.push(`  transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225]),`);
-        lines.push(`])`);
-        lines.push(`\nval_transform = transforms.Compose([\n  transforms.Resize((${cfg.imageSize}, ${cfg.imageSize})),\n  transforms.ToTensor(),\n  ${cfg.normalize? "transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225]),": ""}\n])`);
-        return lines.join('\n');
-      })() }
+
+  dataset: (cfg) => ({
+    cells: [
+      { id: 'data_md', type: 'markdown', content: `## Dataset\n- Source: ${cfg.datasetSource}\n- Format: ${cfg.datasetFormat}\n- Path: ${cfg.datasetPath}\n- Split: ${cfg.split}` },
+      {
+        id: 'data_code', type: 'code', content: (() => {
+          if (cfg.datasetSource === 'kaggle') {
+            return `# Kaggle dataset (ensure kaggle.json exists)\n!pip install -q kaggle\nfrom kaggle.api.kaggle_api_extended import KaggleApi\napi = KaggleApi(); api.authenticate()\napi.dataset_download_files('${cfg.datasetPath}', path='./data', unzip=True)\ndata_dir = Path('data')\n`;
+          } else if (cfg.datasetSource === 'hf') {
+            return `# HuggingFace dataset\n!pip install -q datasets\nfrom datasets import load_dataset\ndataset = load_dataset('${cfg.datasetPath}')\n`;
+          } else if (cfg.datasetSource === 'url') {
+            return `# Download and extract\nimport urllib.request, zipfile\nurl='${cfg.datasetPath}'\nurllib.request.urlretrieve(url,'dataset.zip')\nwith zipfile.ZipFile('dataset.zip','r') as z: z.extractall('data')\n`;
+          } else {
+            return `# Local dataset\nfrom pathlib import Path\ndata_dir = Path('${cfg.datasetPath}')\n`;
+          }
+        })()
+      }
     ]
   }),
-  dataset: (cfg)=>({
-    cells:[
-      {id:'data_md', type:'markdown', content:`## Dataset\n- Source: ${cfg.datasetSource}\n- Format: ${cfg.datasetFormat}\n- Path: ${cfg.datasetPath}\n- Split: ${cfg.split}`},
-      {id:'data_code', type:'code', content: (() => {
-        if(cfg.datasetSource==='kaggle'){
-          return `# Kaggle dataset (ensure kaggle.json exists)\n!pip install -q kaggle\nfrom kaggle.api.kaggle_api_extended import KaggleApi\napi = KaggleApi(); api.authenticate()\napi.dataset_download_files('${cfg.datasetPath}', path='./data', unzip=True)\ndata_dir = Path('data')\n`;
-        } else if(cfg.datasetSource==='hf'){
-          return `# HuggingFace dataset\nfrom datasets import load_dataset\ndataset = load_dataset('${cfg.datasetPath}')\n`;
-        } else if(cfg.datasetSource==='url'){
-          return `# Download and extract\nimport urllib.request, zipfile\nurl='${cfg.datasetPath}'\nurllib.request.urlretrieve(url,'dataset.zip')\nwith zipfile.ZipFile('dataset.zip','r') as z: z.extractall('data')\n`;
-        } else {
-          return `# Local dataset\nfrom pathlib import Path\ndata_dir = Path('${cfg.datasetPath}')\n`;
-        }
-      })() }
+
+  training: (cfg) => ({
+    cells: [
+      { id: 'train_md', type: 'markdown', content: `## Training\n- Epochs: ${cfg.epochs}\n- Batch: ${cfg.batchSize}\n- LR: ${cfg.lr}\n- Optimizer: ${cfg.optimizer}\n- Scheduler: ${cfg.scheduler}` },
+      {
+        id: 'train_code', type: 'code', content: (() => {
+          return `# Training loop (simple)\ncriterion = nn.CrossEntropyLoss()\noptimizer = optim.Adam(model.parameters(), lr=${cfg.lr})\n# dataloaders: train_loader, val_loader expected\nfor epoch in range(${cfg.epochs}):\n  model.train()\n  for xb, yb in train_loader:\n    xb,yb = xb.to(device), yb.to(device)\n    optimizer.zero_grad()\n    out = model(xb)\n    loss = criterion(out,yb)\n    loss.backward()\n    optimizer.step()\n  print('Epoch', epoch+1)\n`;
+        })()
+      }
     ]
   }),
-  training: (cfg)=>({
-    cells:[
-      {id:'train_md', type:'markdown', content:`## Training\n- Epochs: ${cfg.epochs}\n- Batch: ${cfg.batchSize}\n- LR: ${cfg.lr}\n- Optimizer: ${cfg.optimizer}\n- Scheduler: ${cfg.scheduler}`},
-      {id:'train_code', type:'code', content: (() => {
-        return `# Training loop (simple)\ncriterion = nn.CrossEntropyLoss()\noptimizer = optim.Adam(model.parameters(), lr=${cfg.lr})\n# dataloaders: train_loader, val_loader expected\nfor epoch in range(${cfg.epochs}):\n  model.train()\n  for xb, yb in train_loader:\n    xb,yb = xb.to(device), yb.to(device)\n    optimizer.zero_grad()\n    out = model(xb)\n    loss = criterion(out,yb)\n    loss.backward()\n    optimizer.step()\n  print('Epoch', epoch+1)\n`;
-      })() }
+
+  evaluation: (cfg) => ({
+    cells: [
+      { id: 'eval_md', type: 'markdown', content: `## Evaluation & Export\n- RunEval: ${cfg.runEval}\n- Visualize: ${cfg.visualize}\n- Export: ${cfg.export}` },
+      {
+        id: 'eval_code', type: 'code', content: (() => {
+          const parts = [];
+          if (cfg.runEval) {
+            parts.push(`# Evaluate (using val_loader)\nfrom sklearn.metrics import classification_report\nmodel.eval()\n# iterate and compute metrics...`);
+          }
+          if (cfg.visualize) {
+            parts.push(`# Visualize predictions\n# visualize code here`);
+          }
+          if (cfg.export === 'onnx') {
+            parts.push(`# Export to ONNX\ndummy = torch.randn(1,3,${cfg.imageSize},${cfg.imageSize}).to(device)\ntorch.onnx.export(model, dummy, 'model.onnx')`);
+          } else if (cfg.export === 'pt') {
+            parts.push(`torch.save({'model_state_dict': model.state_dict()}, 'best_model.pth')\nprint('Saved best_model.pth')`);
+          }
+          return parts.join('\n\n');
+        })()
+      }
     ]
   }),
-  evaluation: (cfg)=>({
-    cells:[
-      {id:'eval_md', type:'markdown', content:`## Evaluation & Export\n- RunEval: ${cfg.runEval}\n- Visualize: ${cfg.visualize}\n- Export: ${cfg.export}`},
-      {id:'eval_code', type:'code', content: (() => {
-        const parts = [];
-        if(cfg.runEval) {
-          parts.push(`# Evaluate (using val_loader)\nfrom sklearn.metrics import classification_report\nmodel.eval()\n# iterate and compute metrics...`);
-        }
-        if(cfg.visualize) {
-          parts.push(`# Visualize predictions\n# visualize code here`);
-        }
-        if(cfg.export==='onnx') {
-          parts.push(`# Export to ONNX\ndummy = torch.randn(1,3,${cfg.imageSize},${cfg.imageSize}).to(device)\ntorch.onnx.export(model, dummy, 'model.onnx')`);
-        } else if(cfg.export==='pt') {
-          parts.push(`torch.save({'model_state_dict': model.state_dict()}, 'best_model.pth')\nprint('Saved best_model.pth')`);
-        }
-        return parts.join('\n\n');
-      })() }
+
+  test: (cfg) => ({
+    cells: [
+      { id: 'test_md', type: 'markdown', content: `## Test Model\n- Number of images: ${cfg.testNum}\n- Source: ${cfg.testSource}` },
+      {
+        id: 'test_code', type: 'code', content: (() => {
+          // improved test cell including visualization (Ultralytics & PyTorch fallback)
+          return `# Test Model (visual output supported for Ultralytics & PyTorch)\nnum_images = ${cfg.testNum}\nsource = '${cfg.testSource}'  # 'upload'|'dataset'|'url'\n\nfrom pathlib import Path\nfrom PIL import Image\nimport matplotlib.pyplot as plt\nimport numpy as np\n\n# prepare images list\nif source=='upload':\n    uploaded_images = []  # UI-upload placeholder\nelif source=='dataset':\n    import random\n    data_dir = Path('data')\n    uploaded_images = random.sample(list(data_dir.rglob('*.jpg')), num_images)\nelif source=='url':\n    uploaded_images = []  # implement download logic if needed\n\n# helper to show an RGB image inline\ndef show_img(img_arr, title=None):\n    plt.figure(figsize=(8,8))\n    plt.axis('off')\n    if title: plt.title(title)\n    plt.imshow(img_arr)\n    plt.show()\n\n# Run inference & visualize\ntry:\n    model.eval()\nexcept Exception:\n    pass\n\nfor i, img_path in enumerate(uploaded_images):\n    try:\n        pil = Image.open(img_path).convert('RGB')\n    except Exception:\n        print('Could not open', img_path); continue\n\n    # Ultralytics/YOLO path: model.predict returns results with .plot()\n    try:\n        results = model.predict(source=pil, show=False)\n        vis = results[0].plot()\n        try:\n            vis = vis[:, :, ::-1]\n        except Exception:\n            pass\n        show_img(vis, title=f'Predictions: {img_path}')\n        continue\n    except Exception:\n        pass\n\n    # PyTorch fallback\n    try:\n        if 'transform' in globals():\n            x = transform(pil).unsqueeze(0).to(device)\n        else:\n            import torchvision.transforms as T\n            t = T.Compose([T.Resize((${cfg.imageSize}, ${cfg.imageSize})), T.ToTensor()])\n            x = t(pil).unsqueeze(0).to(device)\n        with torch.no_grad():\n            out = model(x)\n        print('Raw output:', out)\n        show_img(np.array(pil), title=f'Image (no overlay) {img_path}')\n    except Exception as ex:\n        print('Inference/visualization failed for', img_path, 'error:', ex)\n`;
+        })()
+      }
     ]
-  })
+  }),
 };
 
 /* Utilities */
+/* Framework installer helper */
+function frameworkInstallerCells(fw){
+  const installers = [];
+  function add(id, content){
+    if(!installers.find(x=>x.id===id)) installers.push({ id, type:'code', language:'bash', content });
+  }
+
+  add('fw_base', `# System basics\n!pip install --upgrade pip\napt-get update -qq && apt-get install -y git wget unzip > /dev/null\n`);
+
+  if(fw === 'pytorch'){
+    add('fw_pytorch', `# Install PyTorch\n!pip install torch torchvision torchaudio -q\npython -c "import torch; print('Torch version:', torch.__version__)"\n`);
+  } else if(fw === 'tensorflow'){
+    add('fw_tf', `# Install TensorFlow\n!pip install tensorflow -q\npython -c "import tensorflow as tf; print('TensorFlow version:', tf.__version__)"\n`);
+  } else if(fw === 'ultralytics' || fw === 'yolo' || fw === 'yolov8'){
+    add('fw_yolo', `# Install Ultralytics YOLO\n!pip install ultralytics -q\npython -c "import ultralytics; print('Ultralytics OK')"\n`);
+  }
+
+  add('fw_common_viz', `# Common utilities\n!pip install matplotlib opencv-python tqdm -q\n`);
+
+  return installers;
+}
+
+/* Config read */
 function getConfig(){
   return {
     projectTitle: document.getElementById('projectTitle').value.trim() || 'AutoVision_Project',
@@ -452,11 +615,15 @@ function getConfig(){
 
     runEval: document.getElementById('sw-eval').classList.contains('on'),
     visualize: document.getElementById('sw-vis').classList.contains('on'),
-    export: document.getElementById('export').value
+    export: document.getElementById('export').value,
+
+    // Test Model
+    testNum: Number(document.getElementById('testNum')?.value) || 1,
+    testSource: document.getElementById('testSource')?.value || 'upload'
   };
 }
 
-/* Render UI cells */
+/* Rendering cells */
 function renderCells(){
   const container = document.getElementById('cells');
   container.innerHTML='';
@@ -484,98 +651,47 @@ function renderCells(){
     const pre = document.createElement('pre'); pre.style.marginTop='26px';
     pre.textContent = c.content;
     pre.onclick = ()=>{ el.setAttribute('contenteditable','true'); };
-    // when user edits in place, mark edited flag
     pre.addEventListener('input', ()=>{ markEdited(c.id, el.innerText || el.textContent); });
-    // set initial content
     el.appendChild(pre);
     container.appendChild(el);
   });
   document.getElementById('cellCount').textContent = notebookCells.length;
 }
 
-/* helpers: find index by id */
+/* helpers */
 function findIndexById(id){ return notebookCells.findIndex(x => x.id===id); }
+function markEdited(id, newContent){ const i = findIndexById(id); if(i<0) return; notebookCells[i].content = newContent; notebookCells[i].edited = true; renderCells(); }
+function saveCellEdit(id){ const idx = findIndexById(id); if(idx<0) return; const el = document.querySelector(`[data-id="${id}"]`); if(!el) return; const text = el.innerText || el.textContent; notebookCells[idx].content = text; notebookCells[idx].edited = true; renderCells(); }
+function regenerateCell(section, cellId){ const cfg = getConfig(); if(!templates[section]) return; const newCells = templates[section](cfg).cells; const found = newCells.find(nc=>nc.id===cellId); if(!found) return alert('Template cell not available for regen'); const idx = findIndexById(cellId); if(idx>=0 && notebookCells[idx].edited){ if(!confirm('This cell has local edits. Overwrite?')) return; } const newObj = {...found, section, edited:false}; if(idx>=0) notebookCells.splice(idx,1,newObj); else notebookCells.push(newObj); renderCells(); }
+function removeCell(id){ const idx = findIndexById(id); if(idx<0) return; notebookCells.splice(idx,1); renderCells(); }
+function clearSection(section){ for(let i=notebookCells.length-1;i>=0;i--){ if(notebookCells[i].section===section) notebookCells.splice(i,1); } renderCells(); }
 
-/* mark edited: update content and flag */
-function markEdited(id, newContent){
-  const i = findIndexById(id); if(i<0) return;
-  notebookCells[i].content = newContent;
-  notebookCells[i].edited = true;
-  renderCells();
-}
-
-/* save cell edit manually (re-reads DOM) */
-function saveCellEdit(id){
-  const idx = findIndexById(id); if(idx<0) return;
-  const el = document.querySelector(`[data-id="${id}"]`);
-  if(!el) return;
-  const text = el.innerText || el.textContent;
-  notebookCells[idx].content = text;
-  notebookCells[idx].edited = true;
-  renderCells();
-}
-
-/* regenerate a single cell from templates (if exists) - only if not edited */
-function regenerateCell(section, cellId){
-  const cfg = getConfig();
-  if(!templates[section]) return;
-  const newCells = templates[section](cfg).cells;
-  const found = newCells.find(nc=>nc.id===cellId);
-  if(!found) return alert('Template cell not available for regen');
-  const idx = findIndexById(cellId);
-  if(idx>=0 && notebookCells[idx].edited){
-    if(!confirm('This cell has local edits. Overwrite?')) return;
-  }
-  const newObj = {...found, section, edited:false};
-  if(idx>=0) notebookCells.splice(idx,1,newObj);
-  else notebookCells.push(newObj);
-  renderCells();
-}
-
-/* remove cell */
-function removeCell(id){
-  const idx = findIndexById(id); if(idx<0) return;
-  notebookCells.splice(idx,1);
-  renderCells();
-}
-
-/* Clear section */
-function clearSection(section){
-  for(let i=notebookCells.length-1;i>=0;i--){ if(notebookCells[i].section===section) notebookCells.splice(i,1); }
-  renderCells();
-}
-
-/* Generate section - preserves edited cells in same section (match by id) */
+/* Generate section with framework installer injection */
 function generateSection(section){
   const cfg = getConfig();
   if(!templates[section]) { alert('No template for '+section); return; }
-  const newCells = templates[section](cfg).cells.map(c=>({ ...c, section, edited:false }));
-  // remove non-edited cells of that section, but keep edited ones
-  const keep = notebookCells.filter(c => !(c.section===section && !c.edited));
-  // merge: for each new cell, if there's an edited with same id, keep edited instead of new
-  newCells.forEach(nc=>{
-    const editedExisting = notebookCells.find(c=>c.id===nc.id && c.section===section && c.edited);
-    if(editedExisting){
-      keep.push(editedExisting);
-    } else {
-      keep.push(nc);
-    }
-  });
-  // also keep other sections
-  const others = notebookCells.filter(c=>c.section!==section);
-  // rebuild: keep others + keep (ensuring order: others first by original order, then new of section)
-  const combined = [];
-  // preserve original order of all previous cells for sections not regenerated
-  notebookCells.forEach(c=>{
-    if(c.section!==section) combined.push(c);
-  });
-  // then append section cells in newCells order, but prefer editedExisting
-  newCells.forEach(nc=>{
-    const editedExisting = notebookCells.find(c=>c.id===nc.id && c.section===section && c.edited);
-    combined.push(editedExisting ? editedExisting : nc);
-  });
-  // replace
-  notebookCells.length=0; notebookCells.push(...combined);
+
+  const baseNewCells = templates[section](cfg).cells.map(c => ({ ...c, section, edited:false }));
+
+  let newCells = baseNewCells;
+  if(section === 'model'){
+    const fwCells = frameworkInstallerCells(cfg.framework || '') || [];
+    const normalizedFw = fwCells.map(c => ({ ...c, section, edited:false }));
+    const existingIds = new Set(baseNewCells.map(c=>c.id));
+    const toPrepend = normalizedFw.filter(c => !existingIds.has(c.id));
+    if(toPrepend.length) newCells = [...toPrepend, ...baseNewCells];
+  }
+
+  const editedCellsMap = {};
+  notebookCells.forEach(c => { if(c.section === section && c.edited) editedCellsMap[c.id] = c; });
+
+  const finalSectionCells = newCells.map(nc => editedCellsMap[nc.id] ? editedCellsMap[nc.id] : nc);
+
+  const others = notebookCells.filter(c => c.section !== section);
+  const combined = [...others, ...finalSectionCells];
+
+  notebookCells.length = 0;
+  notebookCells.push(...combined);
   renderCells();
 }
 
@@ -613,12 +729,7 @@ function resetSettings(){
   document.getElementById('export').value='pt';
 }
 
-function clearAll(){
-  if(!confirm('Clear all cells and reset settings?')) return;
-  notebookCells.length=0;
-  resetSettings();
-  renderCells();
-}
+function clearAll(){ if(!confirm('Clear all cells and reset settings?')) return; notebookCells.length=0; resetSettings(); renderCells(); }
 
 /* download notebook -> nbformat */
 function downloadNotebook(){
@@ -644,86 +755,64 @@ function downloadNotebook(){
 }
 
 /* small helpers for toggles */
-function toggle(id){
-  const el = document.getElementById('sw-'+id);
-  if(!el) return;
-  el.classList.toggle('on');
-}
+function toggle(id){ const el = document.getElementById('sw-'+id); if(!el) return; el.classList.toggle('on'); }
 
-/* update subtasks based on task */
-function updateSubtasks(){
-  const t = document.getElementById('task').value;
-  const sub = document.getElementById('subtask');
-  const map = {
-    classification:['single','multi'],
-    detection:['yolo','rcnn'],
-    segmentation:['semantic','instance'],
-    generation:['diffusion','gan'],
-    video:['action','tracking']
-  };
-  sub.innerHTML='';
-  (map[t]||['default']).forEach(s=>{
-    const opt = document.createElement('option'); opt.value=s; opt.textContent=s; sub.appendChild(opt);
-  });
-}
+/* update subtasks */
+function updateSubtasks(){ const t = document.getElementById('task').value; const sub = document.getElementById('subtask'); 
+const map = { classification:['single','multi'], detection:['yolo','rcnn'], segmentation:['semantic','instance'], generation:['diffusion','gan'], video:['action','tracking'] }; sub.innerHTML=''; (map[t]||['default']).forEach(s=>{ const opt = document.createElement('option'); opt.value=s; opt.textContent=s; sub.appendChild(opt); }); }
 
-/* model name list */
+/* model name list - extended set */
 function updateModelNames(){
   const family = document.getElementById('modelFamily').value;
   const sel = document.getElementById('modelName');
   const map = {
-    resnet:['resnet18','resnet34','resnet50'],
-    mobilenet:['mobilenet_v2','mobilenet_v3_small'],
-    efficientnet:['efficientnet_b0','efficientnet_b1'],
-    yolo:['yolov8n','yolov8s','yolov8m'],
-    vit:['vit_b_16','vit_l_16'],
-    diffusion:['stable-diffusion-v1-5','sdxl']
-  };
+  // 🔹 PyTorch
+  resnet: ['resnet18','resnet34','resnet50','resnet101','resnet152'],
+  mobilenet: ['mobilenet_v2','mobilenet_v3_small','mobilenet_v3_large'],
+  efficientnet: ['efficientnet_b0','efficientnet_b4','efficientnet_b7','efficientnet_v2_s','efficientnet_v2_m','efficientnet_v2_l'],
+  vit: ['vit_b_16','vit_l_16','vit_h_14','swin_t','swin_s','swin_b'],
+  convnext: ['convnext_tiny','convnext_small','convnext_base','convnext_large'],
+
+  // 🔹 TensorFlow
+  tf_mobilenet: ['MobileNetV2','MobileNetV3Small','MobileNetV3Large'],
+  tf_efficientnet: ['EfficientNetB0','EfficientNetB3','EfficientNetB7','EfficientNetV2S','EfficientNetV2M','EfficientNetV2L'],
+  tf_resnet: ['ResNet50','ResNet101','ResNet152','ResNet50V2','ResNet101V2'],
+  tf_inception: ['InceptionV3','InceptionResNetV2'],
+  tf_densenet: ['DenseNet121','DenseNet169','DenseNet201'],
+  tf_vgg: ['VGG16','VGG19'],
+  tf_vit: ['ViT_B16','ViT_L16','MaxViT_Tiny','CoAtNet_1','DeiT_Base'],
+
+  // 🔹 Ultralytics / YOLO
+  yolo: [
+    // YOLOv5 → YOLOv12
+    'yolov5n','yolov5s','yolov5m','yolov5l','yolov5x',
+    'yolov6n','yolov6s','yolov6m','yolov6l','yolov6x',
+    'yolov7-tiny','yolov7','yolov7x','yolov7-w6','yolov7-e6','yolov7-d6',
+    'yolov8n','yolov8s','yolov8m','yolov8l','yolov8x',
+    'yolov9t','yolov9s','yolov9m','yolov9l','yolov9e',
+    'yolov10n','yolov10s','yolov10m','yolov10l','yolov10x',
+    'yolov11n','yolov11s','yolov11m','yolov11l','yolov11x',
+    'yolov12n','yolov12s','yolov12m','yolov12l','yolov12x',
+    // Variants
+    'yolov8n-pose','yolov8s-seg','yolov8m-cls','yolov8x-cls',
+    // Additional vision models
+    'yolo-nas-s','yolo-nas-m','yolo-nas-l',
+    'yolact','yolact++','rtdetr_r50vd','maskrcnn_resnet50',
+    'sam_vit_b','sam_vit_l','sam_hq_vit_l','grounding_dino_t','grounding_dino_b'
+  ]
+};
   sel.innerHTML='';
   (map[family]||['default']).forEach(m=>{ const o=document.createElement('option'); o.value=m; o.textContent=m; sel.appendChild(o); });
 }
 
 /* toggle custom weights UI */
-function toggleCustom(){
-  const src = document.getElementById('modelSource').value;
-  document.getElementById('customGroup').style.display = src==='custom' ? 'block' : 'none';
-}
+function toggleCustom(){ const src = document.getElementById('modelSource').value; document.getElementById('customGroup').style.display = src==='custom' ? 'block' : 'none'; }
 
-/* AI Touch - lightweight local polish (stub) */
-function aiTouch(){
-  if(notebookCells.length===0){ alert('Generate some cells first'); return; }
-  const instr = prompt('AI Touch — paste short instruction (example: "add clearer comments and variable names")','Polish comments and add helpful notes');
-  if(instr===null) return;
-  // Simple heuristic "polish": for each code cell, prepend a comment summarizing instruction and wrap long lines
-  for(let i=0;i<notebookCells.length;i++){
-    const c = notebookCells[i];
-    if(c.type==='code'){
-      if(c.edited) continue; // respect edits
-      const header = `# AI Touch: ${instr}\n# Generated: ${new Date().toISOString()}\n`;
-      // simple polish: ensure there is a newline after header
-      c.content = header + c.content;
-      c.edited = false; // still not user-edited, but we've modified it via AI Touch
-    } else if(c.type==='markdown'){
-      // add extra friendly sentence
-      c.content = c.content + `\n\n> AI Touch note: ${instr}`;
-    }
-  }
-  alert('AI Touch applied (local polish). Replace this with real AI call if desired.');
-  renderCells();
-}
+/* about */
+function openAbout(){ alert('AutoVision Notebook Generator — rule-based single-file UI. AI Touch will be add in upcoming releases.'); }
 
-/* regenerate entire section (utility) */
-function regenSection(section){
-  generateSection(section);
-}
-
-/* regenerate if present on load */
-function init(){
-  updateSubtasks(); updateModelNames(); renderCells();
-  resetSettings();
-}
-
-/* expose functions for buttons */
+/* init */
+function init(){ updateSubtasks(); updateModelNames(); renderCells(); resetSettings(); }
 window.generateSection = generateSection;
 window.clearSection = clearSection;
 window.resetSettings = resetSettings;
@@ -732,10 +821,6 @@ window.downloadNotebook = downloadNotebook;
 window.toggleCustom = toggleCustom;
 window.updateSubtasks = updateSubtasks;
 window.updateModelNames = updateModelNames;
-window.aiTouch = aiTouch;
-
-/* about */
-function openAbout(){ alert('AutoVision Notebook Generator — refined single-file UI. AI Touch is a local stub.'); }
 
 init();
 </script>
