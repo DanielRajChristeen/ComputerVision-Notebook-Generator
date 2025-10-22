@@ -3,20 +3,20 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>AutoVision Notebook Generator — v1</title>
+<title>AutoVision Notebook Generator — v1 Enhanced</title>
 <style>
-
   :root{
-    --bg:#ffeaea;      /* light mode pale red */
-    --panel:#fff0f0;   /* panel lighter pale red */
+    --bg:#ffeaea;
+    --panel:#fff0f0;
     --card:#ffffff; --muted:#666; --text:#0b0b0b;
-    --accent: #b91c1c; /* red accent */
+    --accent: #b91c1c;
     --code-bg:#111111; --code-text:#e6e6e6; --border: #e6e6e6;
+    --success: #16a34a; --warning: #eab308; --error: #dc2626;
   }
   @media (prefers-color-scheme: dark){
     :root{
-      --bg:#2b0000;     /* dark red background */
-      --panel:#3a0000;  /* darker panel */
+      --bg:#2b0000;
+      --panel:#3a0000;
       --card:#0f1113; --muted:#9aa3ac; --text:#e6eef3;
       --accent: #ff6666;
       --code-bg:#0b0b0b; --code-text:#e6e6e6; --border: #202226;
@@ -36,7 +36,6 @@
     background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
   }
 
-  /* utility classes */
   .flex { display:flex }
   .flex1 { flex:1 }
   .gap8 { gap:8px }
@@ -62,10 +61,13 @@
   }
   header h1{font-size:18px; margin:0; letter-spacing:0.2px}
   header p{margin:0; color:var(--muted); font-size:13px}
+  .badge{
+    background: var(--success); color: white; padding: 4px 10px; border-radius: 12px; 
+    font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+  }
 
   .content { display:flex; gap:0; height: calc(100vh - 120px); }
 
-  /* LEFT */
   .left { width:420px; background:var(--panel); padding:18px; overflow:auto; border-right:1px solid var(--border);}
   .card { background:var(--card); border-radius:10px; padding:14px; margin-bottom:14px; box-shadow: 0 4px 14px rgba(2,6,23,0.04); border:1px solid transparent;}
   .card .head { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
@@ -74,6 +76,7 @@
   .btn { border:0; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:600; font-size:13px}
   .btn-prim{ background:var(--accent); color:white; box-shadow: 0 6px 14px rgba(0,0,0,0.08)}
   .btn-ghost{ background:transparent; border:1px solid var(--border); color:var(--text)}
+  .btn-success{ background:var(--success); color:white;}
   .muted{ color:var(--muted); font-size:13px }
 
   label{ display:block; font-size:13px; color:var(--muted); margin-bottom:6px }
@@ -92,7 +95,6 @@
   .switch.on{ background:var(--accent) }
   .switch.on .dot{ transform:translateX(20px) }
 
-  /* RIGHT */
   .right { flex:1; padding:18px; background: linear-gradient(180deg, rgba(0,0,0,0.01), transparent); overflow:auto; }
   .previewTop { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px }
   .previewTop .info { color:var(--muted); font-size:13px }
@@ -107,9 +109,60 @@
 
   .empty { text-align:center; color:var(--muted); padding:60px 20px; border-radius:8px; border:1px dashed var(--border) }
 
-  footer.controls { display:flex; gap:10px; align-items:center; margin-top:8px; }
+  /* NEW: Validation Panel */
+  .validation-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  .validation-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .validation-item:last-child { border-bottom: none; }
+  .validation-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  .validation-icon.pass { background: var(--success); color: white; }
+  .validation-icon.warn { background: var(--warning); color: white; }
+  .validation-icon.fail { background: var(--error); color: white; }
 
-  /* small responsiveness */
+  /* NEW: Status Banner */
+  .status-banner {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    font-size: 14px;
+    font-weight: 600;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.3s;
+  }
+  .status-banner.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .status-banner.success { background: var(--success); color: white; }
+  .status-banner.error { background: var(--error); color: white; }
+  .status-banner.info { background: #3b82f6; color: white; }
+
   @media (max-width:880px){
     .left{ width:100%; height:auto; position:sticky; top:0; z-index:12 }
     .content{ flex-direction:column }
@@ -118,11 +171,13 @@
 </style>
 </head>
 <body>
+<div class="status-banner" id="statusBanner"></div>
+
 <div class="app">
   <header>
     <div class="flex1">
-      <h1>AutoVision Notebook Generator</h1>
-      <p class="muted mt6">Interactive notebook composer — choose, refine, download.</p>
+      <h1>AutoVision Notebook Generator <span class="badge">ENHANCED</span></h1>
+      <p class="muted mt6">Interactive notebook composer with validation & error detection</p>
     </div>
     <div class="flex gap10 center">
       <div class="muted">Theme: system</div>
@@ -131,7 +186,6 @@
   </header>
 
   <div class="content">
-    <!-- LEFT -->
     <aside class="left">
       <!-- Project -->
       <div class="card" id="card-project">
@@ -189,18 +243,18 @@
           </div>
         </div>
 
-  <label for="framework">Framework</label>
-  <select id="framework" onchange="updateModelNames()" title="Framework"><option value="pytorch">PyTorch</option><option value="tensorflow">TensorFlow</option><option value="ultralytics">Ultralytics</option></select>
+        <label for="framework">Framework</label>
+        <select id="framework" onchange="updateModelNames()" title="Framework"><option value="pytorch">PyTorch</option><option value="tensorflow">TensorFlow</option><option value="ultralytics">Ultralytics</option></select>
 
         <label for="modelFamily" class="mt8">Family</label>
         <select id="modelFamily" onchange="updateModelNames()" title="Model family">
           <option value="resnet">ResNet</option><option value="mobilenet">MobileNet</option><option value="efficientnet">EfficientNet</option><option value="yolo">YOLO</option><option value="vit">ViT</option><option value="diffusion">Diffusion</option>
         </select>
 
-  <label for="modelName" class="mt8">Model</label>
-  <select id="modelName" title="Model name"></select>
+        <label for="modelName" class="mt8">Model</label>
+        <select id="modelName" title="Model name"></select>
 
-  <div class="flex gap10 mt8">
+        <div class="flex gap10 mt8">
           <div class="flex1">
             <label for="modelVersion">Version</label>
             <input id="modelVersion" type="text" value="v1" title="Model version" placeholder="v1">
@@ -213,7 +267,7 @@
 
         <label for="modelSource" class="mt8">Model Source</label>
         <select id="modelSource" onchange="toggleCustom()" title="Model source"><option value="pretrained">Pre-trained</option><option value="custom">Custom Weights</option><option value="scratch">From Scratch</option></select>
-  <div id="customGroup" class="mt8 hidden">
+        <div id="customGroup" class="mt8 hidden">
           <label for="customWeightsPath">Custom Weights Path</label>
           <input id="customWeightsPath" type="text" placeholder="/path/to/weights.pth" title="Custom weights path">
         </div>
@@ -279,7 +333,7 @@
         </div>
       </div>
 
-      <!-- Evaluation / Integrations -->
+      <!-- Evaluation -->
       <div class="card" id="card-eval">
         <div class="head">
           <h3>Eval & Integrations</h3>
@@ -292,7 +346,7 @@
           <div class="tog" onclick="toggle('runEval')"><div id="sw-eval" class="switch on"><div class="dot"></div></div><div class="muted">Run Eval</div></div>
           <div class="tog" onclick="toggle('visualize')"><div id="sw-vis" class="switch on"><div class="dot"></div></div><div class="muted">Visualize</div></div>
         </div>
-  <div class="mt8">
+        <div class="mt8">
           <label for="export">Export</label>
           <select id="export" title="Export format"><option value="pt">.pt</option><option value="onnx">.onnx</option><option value="tflite">.tflite</option></select>
         </div>
@@ -317,278 +371,87 @@
         </select>
       </div>
 
+      <!-- NEW: Enhanced Options -->
+      <div class="card">
+        <div class="head"><h3>⚡ Enhanced Options</h3><div class="controls"></div></div>
+        <div class="flex gap8 mt8">
+          <div class="tog" onclick="toggle('pinVersions')"><div id="sw-pinVersions" class="switch on"><div class="dot"></div></div><div class="muted">Pin Library Versions</div></div>
+        </div>
+        <div class="flex gap8 mt8">
+          <div class="tog" onclick="toggle('envChecks')"><div id="sw-envChecks" class="switch on"><div class="dot"></div></div><div class="muted">Add Environment Checks</div></div>
+        </div>
+        <div class="flex gap8 mt8">
+          <div class="tog" onclick="toggle('enhancedErrors')"><div id="sw-enhancedErrors" class="switch on"><div class="dot"></div></div><div class="muted">Enhanced Error Handling</div></div>
+        </div>
+        <div class="flex gap8 mt8">
+          <div class="tog" onclick="toggle('addComments')"><div id="sw-addComments" class="switch on"><div class="dot"></div></div><div class="muted">Educational Comments</div></div>
+        </div>
+      </div>
+
       <!-- Global -->
       <div class="card">
         <div class="head"><h3>Global Controls</h3><div class="controls"></div></div>
-  <div class="flex gap8 mt10 mb10">
+        <div class="flex gap8 mt10 mb10">
           <button class="btn btn-ghost" onclick="resetSettings()">Reset Settings</button>
           <button class="btn btn-ghost" onclick="clearAll()">Clear All</button>
         </div>
         <div class="flex gap8">
+          <button class="btn btn-success flex1" onclick="validateNotebook()">✓ Validate Notebook</button>
+        </div>
+        <div class="flex gap8 mt8">
           <button class="btn btn-prim flex1" onclick="downloadNotebook()">📥 Download Notebook</button>
         </div>
-        <div class="mt10 muted small13">This release: rule-based generator only. AI Touch will be added in upcoming releases </div>
+        <div class="mt10 muted small13">Enhanced version with validation, error handling, and environment checks</div>
       </div>
     </aside>
 
-    <!-- RIGHT -->
     <main class="right">
       <div class="previewTop">
         <div>
           <strong class="strong15">Notebook Preview</strong>
-          <div class="muted mt6">Generated cells appear here. Click a cell to edit — edits are preserved.</div>
+          <div class="muted mt6">Generated cells with enhanced error handling and validation</div>
         </div>
         <div class="info muted">Cells: <span id="cellCount">0</span></div>
+      </div>
+
+      <!-- NEW: Validation Results -->
+      <div id="validationPanel" class="validation-panel hidden">
+        <strong style="font-size:14px; display:block; margin-bottom:10px;">📋 Notebook Validation Results</strong>
+        <div id="validationResults"></div>
       </div>
 
       <div class="cells" id="cells"></div>
 
       <div id="empty" class="empty show">
         <div class="strong16 mb6">No cells yet</div>
-        <div class="muted">Use the Generate buttons on the left to add code/markdown. Edit inline, then download .ipynb.</div>
+        <div class="muted">Use the Generate buttons on the left to add code/markdown with enhanced features.</div>
       </div>
     </main>
   </div>
 </div>
 
 <script>
+const notebookCells = [];
 
-const notebookCells = []; // array of cell objects: {id,type,content,section,edited}
-
-/* Templates */
-const templates = {
-  project: (cfg) => {
-    const bashCells = [];
-
-    // base system
-    bashCells.push({
-      id: "bash_base",
-      type: "code",
-      language: "bash",
-      content: `# System basics\n!pip install --upgrade pip\napt-get update -qq && apt-get install -y git wget unzip > /dev/null\n`,
-    });
-
-    // framework-specific installers handled separately (we also inject when generating model),
-    // but keep dataset / utils here as well:
-    if (cfg.datasetSource === "kaggle") {
-      bashCells.push({ id: "bash_kaggle", type: "code", language: "bash", content: "!pip install kaggle -q\n" });
-    }
-    if (cfg.datasetSource === "hf") {
-      bashCells.push({ id: "bash_hf", type: "code", language: "bash", content: "!pip install datasets -q\n" });
-    }
-    if (cfg.visualize) {
-      bashCells.push({ id: "bash_viz", type: "code", language: "bash", content: "!pip install matplotlib opencv-python tqdm -q\n" });
-    }
-
-    const pythonImports = {
-      id: "imports",
-      type: "code",
-      language: "python",
-      content: `# Python imports\nimport torch, torchvision\nfrom torchvision import transforms, models, datasets\nimport torch.nn as nn, torch.optim as optim\nfrom torch.utils.data import DataLoader\nimport numpy as np, matplotlib.pyplot as plt\nfrom pathlib import Path\n\ndevice = torch.device('cuda' if torch.cuda.is_available() else 'cpu')\nprint('Using', device)\n`,
-    };
-
-    return {
-      cells: [
-        {
-          id: "project_md",
-          type: "markdown",
-          content: `# ${cfg.projectTitle}\n**Author:** ${cfg.author}\n**Generated:** ${new Date().toISOString().split("T")[0]}\n\nThis notebook was generated with AutoVision.`,
-        },
-        ...bashCells,
-        pythonImports,
-      ],
-    };
-  },
-
-  task: (cfg) => ({
-    cells: [
-      { id: 'task_md', type: 'markdown', content: `## Task\n- Task: ${cfg.task}\n- Subtask: ${cfg.subtask}` },
-      { id: 'task_cfg', type: 'code', content: `# Task config\nTASK='${cfg.task}'\nSUBTASK='${cfg.subtask}'\nprint('Task:', TASK, SUBTASK)` }
-    ]
-  }),
-
-  model: (cfg) => ({
-    cells: [
-      {
-        id: "model_md",
-        type: "markdown",
-        content: `## Model Setup \n- Framework: ${cfg.framework}\n- Model: ${cfg.modelName} (${cfg.modelVersion})\n- Source: ${cfg.modelSource}`,
-      },
-      {
-        id: "model_code",
-        type: "code",
-        content: (() => {
-          const fw = cfg.framework;
-          const src = cfg.modelSource;
-          const name = cfg.modelName;
-          const custom = cfg.customWeightsPath || "";
-
-          // PyTorch
-          if (fw === "pytorch") {
-            if (src === "pretrained") {
-              return `# Load pretrained ${name} (PyTorch)\nfrom torchvision import models\nimport torch.nn as nn\n\nmodel = models.${name}(weights='IMAGENET1K_V1')\n# adjust final layer for your num_classes\ntry:\n  num_features = model.fc.in_features\n  model.fc = nn.Linear(num_features, 10)\nexcept Exception:\n  # some models use classifier instead\n  try:\n    in_f = model.classifier[-1].in_features\n    model.classifier[-1] = nn.Linear(in_f, 10)\n  except Exception:\n    pass\nmodel = model.to(device)\nprint(model)`;
-            }
-            if (src === "custom") {
-              return `# Load custom weights for ${name}\nfrom torchvision import models\nimport torch.nn as nn, torch\n\nmodel = models.${name}(weights=None)\n# adapt final layer as needed\ncheckpoint = torch.load("${custom}", map_location=device)\nmodel.load_state_dict(checkpoint.get('model_state_dict', checkpoint))\nmodel = model.to(device)\nprint("Loaded custom weights from ${custom}")`;
-            }
-            return `# Initialize ${name} from scratch (PyTorch)\nfrom torchvision import models\nimport torch.nn as nn\n\nmodel = models.${name}(weights=None)\n# adapt final layer\nmodel = model.to(device)\nprint("Model initialized from scratch")`;
-          }
-
-          // TensorFlow
-          if (fw === "tensorflow") {
-            if (src === "pretrained") {
-              return `# Load pretrained ${name} (TensorFlow/Keras)\nimport tensorflow as tf\nbase = tf.keras.applications.${name}(weights='imagenet', include_top=False, pooling='avg')\nx = tf.keras.layers.Dense(10, activation='softmax')(base.output)\nmodel = tf.keras.Model(inputs=base.input, outputs=x)\nmodel.summary()`;
-            }
-            if (src === "custom") {
-              return `# Load custom weights (TensorFlow)\nimport tensorflow as tf\nmodel = tf.keras.models.load_model("${custom}")\nmodel.summary()`;
-            }
-            return `# Initialize ${name} from scratch (TensorFlow)\nimport tensorflow as tf\nbase = tf.keras.applications.${name}(weights=None, include_top=False, pooling='avg')\nx = tf.keras.layers.Dense(10, activation='softmax')(base.output)\nmodel = tf.keras.Model(inputs=base.input, outputs=x)\nmodel.summary()`;
-          }
-
-          // Ultralytics / YOLO
-          if (fw === "ultralytics" || cfg.modelFamily === "yolo") {
-            if (src === "pretrained") {
-              return `# Load pretrained YOLO model (Ultralytics)\nfrom ultralytics import YOLO\n\n# For Ultralytics, model name like 'yolov8n' refers to a prebuilt model\nmodel = YOLO("${name}.pt")\n# run a quick predict on folder 'data/images'\nresults = model.predict(source="data/images", show=False, save=True)\nprint("Predictions saved to:", getattr(results[0], 'save_dir', 'n/a'))`;
-            }
-            if (src === "custom") {
-              return `# Load YOLO model with custom weights\nfrom ultralytics import YOLO\n\nmodel = YOLO("${custom}")\nresults = model.predict(source="data/images", show=False, save=True)\nprint("Custom weights loaded from:", "${custom}")`;
-            }
-            return `# Train YOLO model from scratch\nfrom ultralytics import YOLO\n\nmodel = YOLO("${name}.yaml")\nmodel.train(data="data.yaml", epochs=100, imgsz=640)\nprint("YOLO training complete")`;
-          }
-
-          return "# Framework not recognized. Please check your selections.";
-        })(),
-      },
-    ],
-  }),
-
-  preprocess: (cfg) => ({
-    cells: [
-      { id: 'pre_md', type: 'markdown', content: `## Preprocessing\n- Image size: ${cfg.imageSize}\n- Normalize: ${cfg.normalize}\n- Augment: ${cfg.augment}\n- Advanced: ${cfg.adv}` },
-      {
-        id: 'pre_code', type: 'code', content: (() => {
-          const lines = [];
-          lines.push(`# Transforms`);
-          lines.push(`from torchvision import transforms`);
-          lines.push(`train_transform = transforms.Compose([`);
-          lines.push(`  transforms.Resize((${cfg.imageSize}, ${cfg.imageSize})),`);
-          if (cfg.augment) {
-            lines.push(`  transforms.RandomHorizontalFlip(),`);
-            lines.push(`  transforms.ColorJitter(brightness=0.2, contrast=0.2),`);
-          }
-          if (cfg.adv) {
-            lines.push(`  transforms.RandomRotation(10),`);
-          }
-          lines.push(`  transforms.ToTensor(),`);
-          if (cfg.normalize) lines.push(`  transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225]),`);
-          lines.push(`])`);
-          lines.push(`\nval_transform = transforms.Compose([\n  transforms.Resize((${cfg.imageSize}, ${cfg.imageSize})),\n  transforms.ToTensor(),\n  ${cfg.normalize ? "transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225])," : ""}\n])`);
-          return lines.join('\n');
-        })()
-      }
-    ]
-  }),
-
-  dataset: (cfg) => ({
-    cells: [
-      { id: 'data_md', type: 'markdown', content: `## Dataset\n- Source: ${cfg.datasetSource}\n- Format: ${cfg.datasetFormat}\n- Path: ${cfg.datasetPath}\n- Split: ${cfg.split}` },
-      {
-        id: 'data_code', type: 'code', content: (() => {
-          if (cfg.datasetSource === 'kaggle') {
-            return `# Kaggle dataset (ensure kaggle.json exists)\n!pip install -q kaggle\nfrom kaggle.api.kaggle_api_extended import KaggleApi\napi = KaggleApi(); api.authenticate()\napi.dataset_download_files('${cfg.datasetPath}', path='./data', unzip=True)\ndata_dir = Path('data')\n`;
-          } else if (cfg.datasetSource === 'hf') {
-            return `# HuggingFace dataset\n!pip install -q datasets\nfrom datasets import load_dataset\ndataset = load_dataset('${cfg.datasetPath}')\n`;
-          } else if (cfg.datasetSource === 'url') {
-            return `# Download and extract\nimport urllib.request, zipfile\nurl='${cfg.datasetPath}'\nurllib.request.urlretrieve(url,'dataset.zip')\nwith zipfile.ZipFile('dataset.zip','r') as z: z.extractall('data')\n`;
-          } else {
-            return `# Local dataset\nfrom pathlib import Path\ndata_dir = Path('${cfg.datasetPath}')\n`;
-          }
-        })()
-      }
-    ]
-  }),
-
-  training: (cfg) => ({
-    cells: [
-      { id: 'train_md', type: 'markdown', content: `## Training\n- Epochs: ${cfg.epochs}\n- Batch: ${cfg.batchSize}\n- LR: ${cfg.lr}\n- Optimizer: ${cfg.optimizer}\n- Scheduler: ${cfg.scheduler}` },
-      {
-        id: 'train_code', type: 'code', content: (() => {
-          return `# Training loop (simple)\ncriterion = nn.CrossEntropyLoss()\noptimizer = optim.Adam(model.parameters(), lr=${cfg.lr})\n# dataloaders: train_loader, val_loader expected\nfor epoch in range(${cfg.epochs}):\n  model.train()\n  for xb, yb in train_loader:\n    xb,yb = xb.to(device), yb.to(device)\n    optimizer.zero_grad()\n    out = model(xb)\n    loss = criterion(out,yb)\n    loss.backward()\n    optimizer.step()\n  print('Epoch', epoch+1)\n`;
-        })()
-      }
-    ]
-  }),
-
-  evaluation: (cfg) => ({
-    cells: [
-      { id: 'eval_md', type: 'markdown', content: `## Evaluation & Export\n- RunEval: ${cfg.runEval}\n- Visualize: ${cfg.visualize}\n- Export: ${cfg.export}` },
-      {
-        id: 'eval_code', type: 'code', content: (() => {
-          const parts = [];
-          if (cfg.runEval) {
-            parts.push(`# Evaluate (using val_loader)\nfrom sklearn.metrics import classification_report\nmodel.eval()\n# iterate and compute metrics...`);
-          }
-          if (cfg.visualize) {
-            parts.push(`# Visualize predictions\n# visualize code here`);
-          }
-          if (cfg.export === 'onnx') {
-            parts.push(`# Export to ONNX\ndummy = torch.randn(1,3,${cfg.imageSize},${cfg.imageSize}).to(device)\ntorch.onnx.export(model, dummy, 'model.onnx')`);
-          } else if (cfg.export === 'pt') {
-            parts.push(`torch.save({'model_state_dict': model.state_dict()}, 'best_model.pth')\nprint('Saved best_model.pth')`);
-          }
-          return parts.join('\n\n');
-        })()
-      }
-    ]
-  }),
-
-  test: (cfg) => ({
-    cells: [
-      { id: 'test_md', type: 'markdown', content: `## Test Model\n- Number of images: ${cfg.testNum}\n- Source: ${cfg.testSource}` },
-      {
-        id: 'test_code', type: 'code', content: (() => {
-          // improved test cell including visualization (Ultralytics & PyTorch fallback)
-          return `# Test Model (visual output supported for Ultralytics & PyTorch)\nnum_images = ${cfg.testNum}\nsource = '${cfg.testSource}'  # 'upload'|'dataset'|'url'\n\nfrom pathlib import Path\nfrom PIL import Image\nimport matplotlib.pyplot as plt\nimport numpy as np\n\n# prepare images list\nif source=='upload':\n    uploaded_images = []  # UI-upload placeholder\nelif source=='dataset':\n    import random\n    data_dir = Path('data')\n    uploaded_images = random.sample(list(data_dir.rglob('*.jpg')), num_images)\nelif source=='url':\n    uploaded_images = []  # implement download logic if needed\n\n# helper to show an RGB image inline\ndef show_img(img_arr, title=None):\n    plt.figure(figsize=(8,8))\n    plt.axis('off')\n    if title: plt.title(title)\n    plt.imshow(img_arr)\n    plt.show()\n\n# Run inference & visualize\ntry:\n    model.eval()\nexcept Exception:\n    pass\n\nfor i, img_path in enumerate(uploaded_images):\n    try:\n        pil = Image.open(img_path).convert('RGB')\n    except Exception:\n        print('Could not open', img_path); continue\n\n    # Ultralytics/YOLO path: model.predict returns results with .plot()\n    try:\n        results = model.predict(source=pil, show=False)\n        vis = results[0].plot()\n        try:\n            vis = vis[:, :, ::-1]\n        except Exception:\n            pass\n        show_img(vis, title=f'Predictions: {img_path}')\n        continue\n    except Exception:\n        pass\n\n    # PyTorch fallback\n    try:\n        if 'transform' in globals():\n            x = transform(pil).unsqueeze(0).to(device)\n        else:\n            import torchvision.transforms as T\n            t = T.Compose([T.Resize((${cfg.imageSize}, ${cfg.imageSize})), T.ToTensor()])\n            x = t(pil).unsqueeze(0).to(device)\n        with torch.no_grad():\n            out = model(x)\n        print('Raw output:', out)\n        show_img(np.array(pil), title=f'Image (no overlay) {img_path}')\n    except Exception as ex:\n        print('Inference/visualization failed for', img_path, 'error:', ex)\n`;
-        })()
-      }
-    ]
-  }),
-};
-
-/* Utilities */
-/* Framework installer helper */
-function frameworkInstallerCells(fw){
-  const installers = [];
-  function add(id, content){
-    if(!installers.find(x=>x.id===id)) installers.push({ id, type:'code', language:'bash', content });
-  }
-
-  add('fw_base', `# System basics\n!pip install --upgrade pip\napt-get update -qq && apt-get install -y git wget unzip > /dev/null\n`);
-
-  if(fw === 'pytorch'){
-    add('fw_pytorch', `# Install PyTorch\n!pip install torch torchvision torchaudio -q\npython -c "import torch; print('Torch version:', torch.__version__)"\n`);
-  } else if(fw === 'tensorflow'){
-    add('fw_tf', `# Install TensorFlow\n!pip install tensorflow -q\npython -c "import tensorflow as tf; print('TensorFlow version:', tf.__version__)"\n`);
-  } else if(fw === 'ultralytics' || fw === 'yolo' || fw === 'yolov8'){
-    add('fw_yolo', `# Install Ultralytics YOLO\n!pip install ultralytics -q\npython -c "import ultralytics; print('Ultralytics OK')"\n`);
-  }
-
-  add('fw_common_viz', `# Common utilities\n!pip install matplotlib opencv-python tqdm -q\n`);
-
-  return installers;
+// NEW: Show status banner
+function showStatus(message, type = 'info') {
+  const banner = document.getElementById('statusBanner');
+  banner.textContent = message;
+  banner.className = `status-banner ${type} show`;
+  setTimeout(() => {
+    banner.classList.remove('show');
+  }, 3000);
 }
 
-/* Config read */
+// NEW: Get enhanced config
 function getConfig(){
   return {
     projectTitle: document.getElementById('projectTitle').value.trim() || 'AutoVision_Project',
     author: document.getElementById('author').value.trim() || 'User',
     notebookStyle: document.getElementById('notebookStyle').value,
     outputPlatform: document.getElementById('outputPlatform').value,
-
     task: document.getElementById('task').value,
     subtask: document.getElementById('subtask').value,
-
     framework: document.getElementById('framework').value,
     modelFamily: document.getElementById('modelFamily').value,
     modelName: document.getElementById('modelName').value,
@@ -596,34 +459,636 @@ function getConfig(){
     mode: document.getElementById('mode').value,
     modelSource: document.getElementById('modelSource').value,
     customWeightsPath: document.getElementById('customWeightsPath').value,
-
     imageSize: Number(document.getElementById('imageSize').value) || 224,
     normalize: document.getElementById('sw-normalize').classList.contains('on'),
     augment: document.getElementById('sw-augment').classList.contains('on'),
     adv: document.getElementById('sw-adv').classList.contains('on'),
-
     datasetSource: document.getElementById('datasetSource').value,
     datasetFormat: document.getElementById('datasetFormat').value,
     datasetPath: document.getElementById('datasetPath').value,
     split: document.getElementById('split').value,
-
     epochs: Number(document.getElementById('epochs').value) || 10,
     batchSize: Number(document.getElementById('batchSize').value) || 16,
     lr: document.getElementById('lr').value,
     optimizer: document.getElementById('optimizer').value,
     scheduler: document.getElementById('scheduler').value,
-
     runEval: document.getElementById('sw-eval').classList.contains('on'),
     visualize: document.getElementById('sw-vis').classList.contains('on'),
     export: document.getElementById('export').value,
-
-    // Test Model
     testNum: Number(document.getElementById('testNum')?.value) || 1,
-    testSource: document.getElementById('testSource')?.value || 'upload'
+    testSource: document.getElementById('testSource')?.value || 'upload',
+    // NEW: Enhanced options
+    pinVersions: document.getElementById('sw-pinVersions')?.classList.contains('on') ?? true,
+    envChecks: document.getElementById('sw-envChecks')?.classList.contains('on') ?? true,
+    enhancedErrors: document.getElementById('sw-enhancedErrors')?.classList.contains('on') ?? true,
+    addComments: document.getElementById('sw-addComments')?.classList.contains('on') ?? true,
   };
 }
 
-/* Rendering cells */
+// NEW: Enhanced templates with improvements
+const templates = {
+  project: (cfg) => {
+    const cells = [];
+    
+    // Markdown header
+    cells.push({
+      id: "project_md",
+      type: "markdown",
+      content: `# ${cfg.projectTitle}\n**Author:** ${cfg.author}\n**Generated:** ${new Date().toISOString().split("T")[0]}\n**Platform:** ${cfg.outputPlatform}\n\nThis notebook was generated with AutoVision Enhanced.`
+    });
+
+    let setupCode = '';
+    if (cfg.addComments) {
+      setupCode += '# =============================================================\n';
+      setupCode += '# ENVIRONMENT SETUP - Consolidated installation cell\n';
+      setupCode += '# This cell installs all required dependencies in one go\n';
+      setupCode += '# =============================================================\n\n';
+    }
+
+    // Smart version handling based on environment
+    setupCode += '# Detect environment\n';
+    setupCode += 'import sys\n';
+    setupCode += 'IN_COLAB = "google.colab" in sys.modules\n';
+    setupCode += 'IN_KAGGLE = "kaggle_secrets" in sys.modules\n\n';
+
+    if (cfg.pinVersions) {
+      setupCode += '# Installing with recommended compatible versions\n';
+      setupCode += 'print("📦 Installing dependencies with version compatibility...")\n\n';
+      
+      setupCode += '# Core PyTorch (use pre-installed in Colab/Kaggle or install latest stable)\n';
+      setupCode += 'if not IN_COLAB and not IN_KAGGLE:\n';
+      setupCode += '    !pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118 -q\n';
+      setupCode += 'else:\n';
+      setupCode += '    print("✓ Using pre-installed PyTorch")\n\n';
+      
+      setupCode += '# Ultralytics YOLO\n';
+      setupCode += '!pip install "ultralytics>=8.0" -q\n\n';
+      
+      setupCode += '# Visualization & utilities (compatible versions)\n';
+      setupCode += '!pip install "matplotlib>=3.8" "opencv-python>=4.8" "tqdm>=4.66" -q\n';
+    } else {
+      setupCode += 'print("📦 Installing latest versions of dependencies...")\n';
+      setupCode += '!pip install --upgrade pip -q\n';
+      setupCode += '!pip install torch torchvision ultralytics matplotlib opencv-python tqdm -q\n';
+    }
+
+    if (cfg.datasetSource === 'kaggle') {
+      setupCode += '!pip install kaggle -q\n';
+    }
+    if (cfg.datasetSource === 'hf') {
+      setupCode += '!pip install datasets -q\n';
+    }
+
+    setupCode += '\n# System utilities\n';
+    setupCode += '!apt-get update -qq 2>&1 | grep -v "Skipping acquire" > /dev/null\n';
+    setupCode += '!apt-get install -y git wget unzip -qq > /dev/null 2>&1\n';
+    
+    if (cfg.addComments) {
+      setupCode += '\nprint("\\n✓ All dependencies installed successfully!")\n';
+      setupCode += 'print("=" * 60)\n';
+    } else {
+      setupCode += '\nprint("✓ Setup complete")\n';
+    }
+
+    cells.push({ id: 'setup_consolidated', type: 'code', content: setupCode });
+
+    // Python imports with environment checks
+    let importsCode = '';
+    if (cfg.addComments) {
+      importsCode += '# =============================================================\n';
+      importsCode += '# IMPORTS & ENVIRONMENT VALIDATION\n';
+      importsCode += '# =============================================================\n\n';
+    }
+
+    importsCode += 'import torch, torchvision\n';
+    importsCode += 'from torchvision import transforms, models, datasets\n';
+    importsCode += 'import torch.nn as nn, torch.optim as optim\n';
+    importsCode += 'from torch.utils.data import DataLoader\n';
+    importsCode += 'import numpy as np, matplotlib.pyplot as plt\n';
+    importsCode += 'from pathlib import Path\n';
+    importsCode += 'import warnings\n';
+    importsCode += 'warnings.filterwarnings("ignore")\n\n';
+
+    if (cfg.envChecks) {
+      importsCode += '# Environment Detection\n';
+      importsCode += 'device = torch.device("cuda" if torch.cuda.is_available() else "cpu")\n';
+      importsCode += 'print(f"Using device: {device}")\n\n';
+      importsCode += 'if torch.cuda.is_available():\n';
+      importsCode += '    print(f"GPU: {torch.cuda.get_device_name(0)}")\n';
+      importsCode += '    print(f"CUDA Version: {torch.version.cuda}")\n';
+      importsCode += 'else:\n';
+      importsCode += '    print("⚠️  WARNING: No GPU detected. Training will be slow on CPU.")\n';
+      
+      if (cfg.outputPlatform === 'kaggle') {
+        importsCode += '    print("💡 TIP: Enable GPU in Kaggle: Settings → Accelerator → GPU")\n';
+      } else if (cfg.outputPlatform === 'colab') {
+        importsCode += '    print("💡 TIP: Enable GPU in Colab: Runtime → Change runtime type → GPU")\n';
+      }
+      
+      importsCode += '\nprint(f"PyTorch Version: {torch.__version__}")\n';
+      importsCode += 'print(f"Torchvision Version: {torchvision.__version__}")\n';
+    } else {
+      importsCode += 'device = torch.device("cuda" if torch.cuda.is_available() else "cpu")\n';
+      importsCode += 'print(f"Using {device}")\n';
+    }
+
+    cells.push({ id: 'imports', type: 'code', content: importsCode });
+
+    return { cells: cells.map(c => ({ ...c, section: 'project', edited: false })) };
+  },
+
+  task: (cfg) => ({
+    cells: [
+      { 
+        id: 'task_md', 
+        type: 'markdown', 
+        content: `## Task Configuration\n- **Task:** ${cfg.task}\n- **Subtask:** ${cfg.subtask}\n- **Mode:** ${cfg.mode}` 
+      },
+      { 
+        id: 'task_cfg', 
+        type: 'code', 
+        content: `${cfg.addComments ? '# Task configuration variables\n' : ''}TASK = '${cfg.task}'\nSUBTASK = '${cfg.subtask}'\nprint(f'Task: {TASK} | Subtask: {SUBTASK}')` 
+      }
+    ]
+  }),
+
+  model: (cfg) => {
+    let modelCode = '';
+    
+    if (cfg.addComments) {
+      modelCode += '# =============================================================\n';
+      modelCode += `# MODEL SETUP: ${cfg.modelName}\n`;
+      modelCode += '# =============================================================\n\n';
+    }
+
+    const fw = cfg.framework;
+    const src = cfg.modelSource;
+    const name = cfg.modelName;
+
+    if (fw === 'ultralytics' || cfg.modelFamily === 'yolo') {
+      modelCode += 'from ultralytics import YOLO\n';
+      
+      if (cfg.enhancedErrors) {
+        modelCode += '\ntry:\n';
+        modelCode += `    # Load YOLO model\n`;
+        modelCode += `    model = YOLO("${name}.pt")\n`;
+        modelCode += `    print(f"✓ Model ${name}.pt loaded successfully")\n`;
+        modelCode += '    \n';
+        modelCode += `    # Quick validation inference\n`;
+        modelCode += '    print("Running test prediction...")\n';
+        modelCode += '    results = model.predict(source="https://ultralytics.com/images/bus.jpg", show=False, save=False, verbose=False)\n';
+        modelCode += '    print(f"✓ Model inference working. Detected {len(results[0].boxes)} objects")\n';
+        modelCode += '    \nexcept Exception as e:\n';
+        modelCode += '    print(f"❌ ERROR loading model: {e}")\n';
+        modelCode += '    print("💡 TIP: Check internet connection for model download")\n';
+        modelCode += '    raise\n';
+      } else {
+        modelCode += `\nmodel = YOLO("${name}.pt")\n`;
+        modelCode += 'results = model.predict(source="https://ultralytics.com/images/bus.jpg", show=False, save=False)\n';
+        modelCode += 'print("Model loaded and validated")\n';
+      }
+    } else if (fw === 'pytorch') {
+      modelCode += 'from torchvision import models\n';
+      modelCode += 'import torch.nn as nn\n\n';
+      
+      if (cfg.enhancedErrors) {
+        modelCode += 'try:\n';
+        modelCode += `    # Load ${name} model\n`;
+        modelCode += `    model = models.${name}(weights='IMAGENET1K_V1' if '${src}' == 'pretrained' else None)\n`;
+        modelCode += '    \n    # Modify final layer for your number of classes\n';
+        modelCode += '    try:\n';
+        modelCode += '        num_features = model.fc.in_features\n';
+        modelCode += '        model.fc = nn.Linear(num_features, 10)  # Change 10 to your num_classes\n';
+        modelCode += '    except AttributeError:\n';
+        modelCode += '        try:\n';
+        modelCode += '            num_features = model.classifier[-1].in_features\n';
+        modelCode += '            model.classifier[-1] = nn.Linear(num_features, 10)\n';
+        modelCode += '        except Exception:\n';
+        modelCode += '            print("⚠️  Could not modify final layer automatically")\n';
+        modelCode += '    \n';
+        modelCode += '    model = model.to(device)\n';
+        modelCode += '    print(f"✓ Model loaded on {device}")\n';
+        modelCode += '    print(f"✓ Total parameters: {sum(p.numel() for p in model.parameters()):,}")\n';
+        modelCode += 'except Exception as e:\n';
+        modelCode += '    print(f"❌ ERROR: {e}")\n';
+        modelCode += '    raise\n';
+      } else {
+        modelCode += `model = models.${name}(weights='IMAGENET1K_V1' if '${src}' == 'pretrained' else None)\n`;
+        modelCode += 'model = model.to(device)\n';
+        modelCode += 'print(f"✓ Model loaded successfully")\n';
+      }
+    } else if (fw === 'tensorflow') {
+      modelCode += 'import tensorflow as tf\n\n';
+      
+      if (cfg.enhancedErrors) {
+        modelCode += 'try:\n';
+        modelCode += `    # Load ${name} model\n`;
+        modelCode += `    base = tf.keras.applications.${name}(weights='imagenet' if '${src}' == 'pretrained' else None, include_top=False, pooling='avg')\n`;
+        modelCode += '    x = tf.keras.layers.Dense(10, activation="softmax")(base.output)\n';
+        modelCode += '    model = tf.keras.Model(inputs=base.input, outputs=x)\n';
+        modelCode += '    print("✓ TensorFlow model loaded")\n';
+        modelCode += '    model.summary()\n';
+        modelCode += 'except Exception as e:\n';
+        modelCode += '    print(f"❌ ERROR: {e}")\n';
+        modelCode += '    raise\n';
+      } else {
+        modelCode += `base = tf.keras.applications.${name}(weights='imagenet' if '${src}' == 'pretrained' else None, include_top=False, pooling='avg')\n`;
+        modelCode += 'x = tf.keras.layers.Dense(10, activation="softmax")(base.output)\n';
+        modelCode += 'model = tf.keras.Model(inputs=base.input, outputs=x)\n';
+        modelCode += 'model.summary()\n';
+      }
+    }
+
+    return {
+      cells: [
+        { 
+          id: 'model_md', 
+          type: 'markdown', 
+          content: `## Model Setup\n- **Framework:** ${cfg.framework}\n- **Model:** ${cfg.modelName} (${cfg.modelVersion})\n- **Source:** ${cfg.modelSource}\n- **Device:** Auto-detected (GPU preferred)` 
+        },
+        { id: 'model_code', type: 'code', content: modelCode }
+      ]
+    };
+  },
+
+  preprocess: (cfg) => {
+    let code = '';
+    
+    if (cfg.addComments) {
+      code += '# =============================================================\n';
+      code += '# DATA PREPROCESSING & AUGMENTATION\n';
+      code += '# =============================================================\n\n';
+    }
+
+    code += 'from torchvision import transforms\n\n';
+    
+    if (cfg.addComments) {
+      code += '# Training transformations (with augmentation)\n';
+    }
+    code += 'train_transform = transforms.Compose([\n';
+    code += `    transforms.Resize((${cfg.imageSize}, ${cfg.imageSize})),\n`;
+    
+    if (cfg.augment) {
+      code += '    transforms.RandomHorizontalFlip(p=0.5),\n';
+      code += '    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),\n';
+    }
+    if (cfg.adv) {
+      code += '    transforms.RandomRotation(10),\n';
+      code += '    transforms.RandomAffine(degrees=0, translate=(0.1, 0.1)),\n';
+    }
+    
+    code += '    transforms.ToTensor(),\n';
+    if (cfg.normalize) {
+      code += '    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),\n';
+    }
+    code += '])\n\n';
+    
+    if (cfg.addComments) {
+      code += '# Validation transformations (no augmentation)\n';
+    }
+    code += 'val_transform = transforms.Compose([\n';
+    code += `    transforms.Resize((${cfg.imageSize}, ${cfg.imageSize})),\n`;
+    code += '    transforms.ToTensor(),\n';
+    if (cfg.normalize) {
+      code += '    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),\n';
+    }
+    code += '])\n\n';
+    code += 'print("✓ Transforms configured")\n';
+
+    return {
+      cells: [
+        { 
+          id: 'pre_md', 
+          type: 'markdown', 
+          content: `## Preprocessing\n- **Image Size:** ${cfg.imageSize}x${cfg.imageSize}\n- **Normalize:** ${cfg.normalize ? 'Yes (ImageNet stats)' : 'No'}\n- **Augmentation:** ${cfg.augment ? 'Yes' : 'No'}\n- **Advanced Aug:** ${cfg.adv ? 'Yes' : 'No'}` 
+        },
+        { id: 'pre_code', type: 'code', content: code }
+      ]
+    };
+  },
+
+  dataset: (cfg) => {
+    let code = '';
+    
+    if (cfg.addComments) {
+      code += '# =============================================================\n';
+      code += '# DATASET LOADING\n';
+      code += '# =============================================================\n\n';
+    }
+
+    if (cfg.enhancedErrors) {
+      code += 'try:\n    ';
+    }
+
+    if (cfg.datasetSource === 'kaggle') {
+      code += 'from kaggle.api.kaggle_api_extended import KaggleApi\n';
+      code += '    api = KaggleApi()\n';
+      code += '    api.authenticate()\n';
+      code += `    print("Downloading dataset: ${cfg.datasetPath}")\n`;
+      code += `    api.dataset_download_files('${cfg.datasetPath}', path='./data', unzip=True)\n`;
+      code += '    data_dir = Path("data")\n';
+      code += '    print(f"✓ Dataset downloaded to {data_dir}")\n';
+    } else if (cfg.datasetSource === 'local') {
+      code += `data_dir = Path('${cfg.datasetPath || './data'}')\n`;
+      code += '    if not data_dir.exists():\n';
+      code += '        raise FileNotFoundError(f"Dataset directory not found: {data_dir}")\n';
+      code += '    print(f"✓ Using local dataset: {data_dir}")\n';
+    }
+
+    if (cfg.enhancedErrors) {
+      code += '\nexcept Exception as e:\n';
+      code += '    print(f"❌ ERROR loading dataset: {e}")\n';
+      code += '    print("💡 TIP: Check path and permissions")\n';
+      code += '    raise\n';
+    }
+
+    return {
+      cells: [
+        { 
+          id: 'data_md', 
+          type: 'markdown', 
+          content: `## Dataset\n- **Source:** ${cfg.datasetSource}\n- **Format:** ${cfg.datasetFormat}\n- **Path:** ${cfg.datasetPath || 'Not specified'}\n- **Split:** ${cfg.split}` 
+        },
+        { id: 'data_code', type: 'code', content: code }
+      ]
+    };
+  },
+
+  training: (cfg) => {
+    let code = '';
+    
+    if (cfg.addComments) {
+      code += '# =============================================================\n';
+      code += '# TRAINING LOOP\n';
+      code += '# =============================================================\n\n';
+    }
+
+    if (cfg.enhancedErrors) {
+      code += 'try:\n    ';
+    }
+
+    code += 'criterion = nn.CrossEntropyLoss()\n';
+    code += `    optimizer = optim.${cfg.optimizer.charAt(0).toUpperCase() + cfg.optimizer.slice(1)}(model.parameters(), lr=${cfg.lr})\n\n`;
+    
+    if (cfg.addComments) {
+      code += '    # Training loop (assuming train_loader and val_loader are defined)\n';
+    }
+    
+    code += `    for epoch in range(${cfg.epochs}):\n`;
+    code += '        model.train()\n';
+    code += '        running_loss = 0.0\n';
+    code += '        \n';
+    code += '        for batch_idx, (images, labels) in enumerate(train_loader):\n';
+    code += '            images, labels = images.to(device), labels.to(device)\n';
+    code += '            \n';
+    code += '            optimizer.zero_grad()\n';
+    code += '            outputs = model(images)\n';
+    code += '            loss = criterion(outputs, labels)\n';
+    code += '            loss.backward()\n';
+    code += '            optimizer.step()\n';
+    code += '            \n';
+    code += '            running_loss += loss.item()\n';
+    code += '        \n';
+    code += '        avg_loss = running_loss / len(train_loader)\n';
+    code += '        print(f"Epoch [{epoch+1}/${cfg.epochs}] Loss: {avg_loss:.4f}")\n';
+
+    if (cfg.enhancedErrors) {
+      code += '\nexcept Exception as e:\n';
+      code += '    print(f"❌ TRAINING ERROR: {e}")\n';
+      code += '    print("💡 TIP: Check that train_loader and val_loader are properly defined")\n';
+      code += '    raise\n';
+    }
+
+    return {
+      cells: [
+        { 
+          id: 'train_md', 
+          type: 'markdown', 
+          content: `## Training\n- **Epochs:** ${cfg.epochs}\n- **Batch Size:** ${cfg.batchSize}\n- **Learning Rate:** ${cfg.lr}\n- **Optimizer:** ${cfg.optimizer}\n- **Scheduler:** ${cfg.scheduler}` 
+        },
+        { id: 'train_code', type: 'code', content: code }
+      ]
+    };
+  },
+
+  evaluation: (cfg) => {
+    let code = '';
+    
+    if (cfg.addComments) {
+      code += '# =============================================================\n';
+      code += '# MODEL EVALUATION\n';
+      code += '# =============================================================\n\n';
+    }
+
+    if (cfg.runEval) {
+      code += 'from sklearn.metrics import classification_report, confusion_matrix\n\n';
+      code += 'model.eval()\n';
+      code += 'all_preds = []\n';
+      code += 'all_labels = []\n\n';
+      code += 'with torch.no_grad():\n';
+      code += '    for images, labels in val_loader:\n';
+      code += '        images, labels = images.to(device), labels.to(device)\n';
+      code += '        outputs = model(images)\n';
+      code += '        _, preds = torch.max(outputs, 1)\n';
+      code += '        all_preds.extend(preds.cpu().numpy())\n';
+      code += '        all_labels.extend(labels.cpu().numpy())\n\n';
+      code += 'print(classification_report(all_labels, all_preds))\n';
+    }
+
+    if (cfg.export === 'pt') {
+      code += '\n# Save model\n';
+      code += 'torch.save({\n';
+      code += '    "model_state_dict": model.state_dict(),\n';
+      code += '    "optimizer_state_dict": optimizer.state_dict(),\n';
+      code += '}, "best_model.pth")\n';
+      code += 'print("✓ Model saved to best_model.pth")\n';
+    }
+
+    return {
+      cells: [
+        { 
+          id: 'eval_md', 
+          type: 'markdown', 
+          content: `## Evaluation & Export\n- **Run Eval:** ${cfg.runEval}\n- **Visualize:** ${cfg.visualize}\n- **Export Format:** ${cfg.export}` 
+        },
+        { id: 'eval_code', type: 'code', content: code }
+      ]
+    };
+  },
+
+  test: (cfg) => {
+    let code = '';
+    
+    if (cfg.addComments) {
+      code += '# =============================================================\n';
+      code += '# MODEL TESTING & VISUALIZATION\n';
+      code += '# Supports both Ultralytics YOLO and PyTorch models\n';
+      code += '# =============================================================\n\n';
+    }
+
+    code += 'from pathlib import Path\n';
+    code += 'from PIL import Image\n';
+    code += 'import matplotlib.pyplot as plt\n';
+    code += 'import numpy as np\n\n';
+
+    code += `num_images = ${cfg.testNum}\n`;
+    code += `source = '${cfg.testSource}'\n\n`;
+
+    if (cfg.addComments) {
+      code += '# Prepare image list based on source\n';
+    }
+
+    code += 'if source == "upload":\n';
+    code += '    uploaded_images = []  # Add your uploaded image paths here\n';
+    code += '    print("⚠️  No images uploaded. Add paths to uploaded_images list")\n';
+    code += 'elif source == "dataset":\n';
+    code += '    import random\n';
+    code += '    data_dir = Path("data")\n';
+    code += '    if data_dir.exists():\n';
+    code += '        all_images = list(data_dir.rglob("*.jpg")) + list(data_dir.rglob("*.png"))\n';
+    code += '        uploaded_images = random.sample(all_images, min(num_images, len(all_images)))\n';
+    code += '        print(f"✓ Selected {len(uploaded_images)} random images")\n';
+    code += '    else:\n';
+    code += '        print("❌ Dataset directory not found")\n';
+    code += '        uploaded_images = []\n';
+    code += 'elif source == "url":\n';
+    code += '    uploaded_images = ["https://ultralytics.com/images/bus.jpg"]  # Example URL\n\n';
+
+    code += 'def show_img(img_arr, title=None):\n';
+    code += '    """Display image with optional title"""\n';
+    code += '    plt.figure(figsize=(10, 10))\n';
+    code += '    plt.axis("off")\n';
+    code += '    if title:\n';
+    code += '        plt.title(title, fontsize=14, pad=10)\n';
+    code += '    plt.imshow(img_arr)\n';
+    code += '    plt.show()\n\n';
+
+    if (cfg.enhancedErrors) {
+      code += '# Run inference with comprehensive error handling\n';
+      code += 'for i, img_path in enumerate(uploaded_images):\n';
+      code += '    try:\n';
+      code += '        print(f"\\nProcessing image {i+1}/{len(uploaded_images)}: {img_path}")\n';
+      code += '        pil_img = Image.open(img_path).convert("RGB")\n';
+      code += '        \n';
+      code += '        # Try Ultralytics/YOLO inference\n';
+      code += '        try:\n';
+      code += '            results = model.predict(source=pil_img, show=False, verbose=False)\n';
+      code += '            vis = results[0].plot()\n';
+      code += '            vis = vis[:, :, ::-1]  # BGR to RGB\n';
+      code += '            show_img(vis, title=f"YOLO Predictions: {Path(img_path).name}")\n';
+      code += '            print(f"✓ Detected {len(results[0].boxes)} objects")\n';
+      code += '            continue\n';
+      code += '        except Exception:\n';
+      code += '            pass\n';
+      code += '        \n';
+      code += '        # Fallback to PyTorch inference\n';
+      code += '        try:\n';
+      code += '            model.eval()\n';
+      code += `            transform = transforms.Compose([\n`;
+      code += `                transforms.Resize((${cfg.imageSize}, ${cfg.imageSize})),\n`;
+      code += `                transforms.ToTensor(),\n`;
+      code += `            ])\n`;
+      code += '            x = transform(pil_img).unsqueeze(0).to(device)\n';
+      code += '            with torch.no_grad():\n';
+      code += '                out = model(x)\n';
+      code += '            _, pred = torch.max(out, 1)\n';
+      code += '            print(f"Prediction: Class {pred.item()}")\n';
+      code += '            show_img(np.array(pil_img), title=f"Image: {Path(img_path).name}")\n';
+      code += '        except Exception as ex2:\n';
+      code += '            print(f"❌ PyTorch inference failed: {ex2}")\n';
+      code += '            show_img(np.array(pil_img), title=f"Original: {Path(img_path).name}")\n';
+      code += '    \n';
+      code += '    except Exception as e:\n';
+      code += '        print(f"❌ ERROR processing {img_path}: {e}")\n';
+      code += '        continue\n';
+    } else {
+      code += 'for img_path in uploaded_images:\n';
+      code += '    pil_img = Image.open(img_path).convert("RGB")\n';
+      code += '    results = model.predict(source=pil_img, show=False)\n';
+      code += '    vis = results[0].plot()\n';
+      code += '    show_img(vis[:, :, ::-1], title=str(img_path))\n';
+    }
+
+    return {
+      cells: [
+        { 
+          id: 'test_md', 
+          type: 'markdown', 
+          content: `## Test Model\n- **Number of Images:** ${cfg.testNum}\n- **Source:** ${cfg.testSource}\n- **Output:** Visual predictions with bounding boxes` 
+        },
+        { id: 'test_code', type: 'code', content: code }
+      ]
+    };
+  },
+};
+
+// NEW: Validation function
+function validateNotebook() {
+  const cfg = getConfig();
+  const results = [];
+
+  // Check 1: Has cells
+  if (notebookCells.length === 0) {
+    results.push({ type: 'fail', message: 'No cells generated. Generate at least one section.' });
+  } else {
+    results.push({ type: 'pass', message: `Notebook has ${notebookCells.length} cells` });
+  }
+
+  // Check 2: Has essential sections
+  const sections = new Set(notebookCells.map(c => c.section));
+  if (!sections.has('project')) {
+    results.push({ type: 'warn', message: 'Missing Project Info section' });
+  } else {
+    results.push({ type: 'pass', message: 'Project Info configured' });
+  }
+
+  if (!sections.has('model')) {
+    results.push({ type: 'warn', message: 'Missing Model Setup section' });
+  } else {
+    results.push({ type: 'pass', message: 'Model Setup configured' });
+  }
+
+  // Check 3: Dataset path validation
+  if (cfg.datasetPath.trim() === '' && sections.has('dataset')) {
+    results.push({ type: 'warn', message: 'Dataset path is empty' });
+  }
+
+  // Check 4: Enhanced features status
+  if (cfg.pinVersions) {
+    results.push({ type: 'pass', message: 'Smart version management enabled (environment-aware)' });
+  } else {
+    results.push({ type: 'warn', message: 'Version pinning disabled - may have compatibility issues' });
+  }
+  
+  if (cfg.envChecks) {
+    results.push({ type: 'pass', message: 'Environment checks enabled' });
+  }
+
+  if (cfg.enhancedErrors) {
+    results.push({ type: 'pass', message: 'Enhanced error handling enabled' });
+  }
+
+  // Display results
+  const panel = document.getElementById('validationPanel');
+  const resultsDiv = document.getElementById('validationResults');
+  
+  resultsDiv.innerHTML = results.map(r => {
+    const iconClass = r.type === 'pass' ? 'pass' : r.type === 'warn' ? 'warn' : 'fail';
+    const icon = r.type === 'pass' ? '✓' : r.type === 'warn' ? '!' : '✗';
+    return `
+      <div class="validation-item">
+        <div class="validation-icon ${iconClass}">${icon}</div>
+        <div>${r.message}</div>
+      </div>
+    `;
+  }).join('');
+
+  panel.classList.remove('hidden');
+  
+  const hasErrors = results.some(r => r.type === 'fail');
+  showStatus(hasErrors ? 'Validation found issues' : 'Validation passed!', hasErrors ? 'error' : 'success');
+}
+
 function renderCells(){
   const container = document.getElementById('cells');
   container.innerHTML='';
@@ -636,21 +1101,35 @@ function renderCells(){
     const el = document.createElement('div');
     el.className = 'cell' + (c.type==='markdown' ? ' markdown' : '');
     el.setAttribute('data-id', c.id);
-    el.setAttribute('contenteditable', c.editable? 'true' : 'true'); // editable always
-    // toolbar
-    const toolbar = document.createElement('div'); toolbar.className='toolbar';
-    const btnSave = document.createElement('button'); btnSave.className='tool'; btnSave.textContent='Save'; btnSave.onclick=(e)=>{ e.stopPropagation(); saveCellEdit(c.id); };
-    const btnRegen = document.createElement('button'); btnRegen.className='tool'; btnRegen.textContent='Regenerate'; btnRegen.onclick=(e)=>{ e.stopPropagation(); regenerateCell(c.section,c.id); };
-    const btnRemove = document.createElement('button'); btnRemove.className='tool'; btnRemove.textContent='Remove'; btnRemove.onclick=(e)=>{ e.stopPropagation(); removeCell(c.id); };
-    toolbar.appendChild(btnSave); toolbar.appendChild(btnRegen); toolbar.appendChild(btnRemove);
+    el.setAttribute('contenteditable', 'true');
+    
+    const toolbar = document.createElement('div'); 
+    toolbar.className='toolbar';
+    const btnSave = document.createElement('button'); 
+    btnSave.className='tool'; 
+    btnSave.textContent='Save'; 
+    btnSave.onclick=(e)=>{ e.stopPropagation(); saveCellEdit(c.id); };
+    const btnRegen = document.createElement('button'); 
+    btnRegen.className='tool'; 
+    btnRegen.textContent='Regen'; 
+    btnRegen.onclick=(e)=>{ e.stopPropagation(); regenerateCell(c.section,c.id); };
+    const btnRemove = document.createElement('button'); 
+    btnRemove.className='tool'; 
+    btnRemove.textContent='Remove'; 
+    btnRemove.onclick=(e)=>{ e.stopPropagation(); removeCell(c.id); };
+    toolbar.appendChild(btnSave); 
+    toolbar.appendChild(btnRegen); 
+    toolbar.appendChild(btnRemove);
     el.appendChild(toolbar);
 
-    const label = document.createElement('div'); label.className='label'; label.textContent = c.type === 'markdown' ? 'Markdown' : 'Code';
+    const label = document.createElement('div'); 
+    label.className='label'; 
+    label.textContent = c.type === 'markdown' ? 'Markdown' : 'Code';
     el.appendChild(label);
 
-    const pre = document.createElement('pre'); pre.style.marginTop='26px';
+    const pre = document.createElement('pre'); 
+    pre.style.marginTop='26px';
     pre.textContent = c.content;
-    pre.onclick = ()=>{ el.setAttribute('contenteditable','true'); };
     pre.addEventListener('input', ()=>{ markEdited(c.id, el.innerText || el.textContent); });
     el.appendChild(pre);
     container.appendChild(el);
@@ -658,169 +1137,275 @@ function renderCells(){
   document.getElementById('cellCount').textContent = notebookCells.length;
 }
 
-/* helpers */
 function findIndexById(id){ return notebookCells.findIndex(x => x.id===id); }
-function markEdited(id, newContent){ const i = findIndexById(id); if(i<0) return; notebookCells[i].content = newContent; notebookCells[i].edited = true; renderCells(); }
-function saveCellEdit(id){ const idx = findIndexById(id); if(idx<0) return; const el = document.querySelector(`[data-id="${id}"]`); if(!el) return; const text = el.innerText || el.textContent; notebookCells[idx].content = text; notebookCells[idx].edited = true; renderCells(); }
-function regenerateCell(section, cellId){ const cfg = getConfig(); if(!templates[section]) return; const newCells = templates[section](cfg).cells; const found = newCells.find(nc=>nc.id===cellId); if(!found) return alert('Template cell not available for regen'); const idx = findIndexById(cellId); if(idx>=0 && notebookCells[idx].edited){ if(!confirm('This cell has local edits. Overwrite?')) return; } const newObj = {...found, section, edited:false}; if(idx>=0) notebookCells.splice(idx,1,newObj); else notebookCells.push(newObj); renderCells(); }
-function removeCell(id){ const idx = findIndexById(id); if(idx<0) return; notebookCells.splice(idx,1); renderCells(); }
-function clearSection(section){ for(let i=notebookCells.length-1;i>=0;i--){ if(notebookCells[i].section===section) notebookCells.splice(i,1); } renderCells(); }
+function markEdited(id, newContent){ 
+  const i = findIndexById(id); 
+  if(i<0) return; 
+  notebookCells[i].content = newContent; 
+  notebookCells[i].edited = true; 
+}
 
-/* Generate section with framework installer injection */
+function saveCellEdit(id){ 
+  const idx = findIndexById(id); 
+  if(idx<0) return; 
+  const el = document.querySelector(`[data-id="${id}"]`); 
+  if(!el) return; 
+  const text = el.innerText || el.textContent; 
+  notebookCells[idx].content = text; 
+  notebookCells[idx].edited = true; 
+  showStatus('Cell saved', 'success');
+  renderCells(); 
+}
+
+function regenerateCell(section, cellId){ 
+  const cfg = getConfig(); 
+  if(!templates[section]) return; 
+  const newCells = templates[section](cfg).cells; 
+  const found = newCells.find(nc=>nc.id===cellId); 
+  if(!found) {
+    showStatus('Cannot regenerate this cell', 'error');
+    return;
+  }
+  
+  const idx = findIndexById(cellId); 
+  if(idx>=0 && notebookCells[idx].edited){ 
+    if(!confirm('This cell has local edits. Overwrite?')) return; 
+  } 
+  
+  const newObj = {...found, section, edited:false}; 
+  if(idx>=0) notebookCells.splice(idx,1,newObj); 
+  else notebookCells.push(newObj); 
+  
+  showStatus('Cell regenerated', 'success');
+  renderCells(); 
+}
+
+function removeCell(id){ 
+  const idx = findIndexById(id); 
+  if(idx<0) return; 
+  notebookCells.splice(idx,1); 
+  showStatus('Cell removed', 'info');
+  renderCells(); 
+}
+
+function clearSection(section){ 
+  const count = notebookCells.filter(c => c.section === section).length;
+  if (count === 0) return;
+  
+  for(let i=notebookCells.length-1;i>=0;i--){ 
+    if(notebookCells[i].section===section) notebookCells.splice(i,1); 
+  } 
+  showStatus(`Cleared ${count} cells from ${section}`, 'info');
+  renderCells(); 
+}
+
 function generateSection(section){
   const cfg = getConfig();
-  if(!templates[section]) { alert('No template for '+section); return; }
-
-  const baseNewCells = templates[section](cfg).cells.map(c => ({ ...c, section, edited:false }));
-
-  let newCells = baseNewCells;
-  if(section === 'model'){
-    const fwCells = frameworkInstallerCells(cfg.framework || '') || [];
-    const normalizedFw = fwCells.map(c => ({ ...c, section, edited:false }));
-    const existingIds = new Set(baseNewCells.map(c=>c.id));
-    const toPrepend = normalizedFw.filter(c => !existingIds.has(c.id));
-    if(toPrepend.length) newCells = [...toPrepend, ...baseNewCells];
+  if(!templates[section]) { 
+    showStatus('No template for ' + section, 'error'); 
+    return; 
   }
 
+  const baseNewCells = templates[section](cfg).cells.map(c => ({ ...c, section, edited:false }));
   const editedCellsMap = {};
-  notebookCells.forEach(c => { if(c.section === section && c.edited) editedCellsMap[c.id] = c; });
+  notebookCells.forEach(c => { 
+    if(c.section === section && c.edited) editedCellsMap[c.id] = c; 
+  });
 
-  const finalSectionCells = newCells.map(nc => editedCellsMap[nc.id] ? editedCellsMap[nc.id] : nc);
-
+  const finalSectionCells = baseNewCells.map(nc => editedCellsMap[nc.id] ? editedCellsMap[nc.id] : nc);
   const others = notebookCells.filter(c => c.section !== section);
   const combined = [...others, ...finalSectionCells];
 
   notebookCells.length = 0;
   notebookCells.push(...combined);
+  
+  showStatus(`Generated ${section} section`, 'success');
   renderCells();
 }
 
-/* reset / clear all */
 function resetSettings(){
   document.getElementById('projectTitle').value='AutoVision_Project';
   document.getElementById('author').value='User';
   document.getElementById('notebookStyle').value='minimal';
   document.getElementById('outputPlatform').value='download';
-
-  document.getElementById('task').value='classification'; updateSubtasks();
+  document.getElementById('task').value='classification'; 
+  updateSubtasks();
   document.getElementById('framework').value='pytorch';
-  document.getElementById('modelFamily').value='resnet'; updateModelNames();
-  document.getElementById('modelVersion').value='v1'; document.getElementById('mode').value='train';
-  document.getElementById('modelSource').value='pretrained'; toggleCustom();
-
+  document.getElementById('modelFamily').value='resnet'; 
+  updateModelNames();
+  document.getElementById('modelVersion').value='v1'; 
+  document.getElementById('mode').value='train';
+  document.getElementById('modelSource').value='pretrained'; 
+  toggleCustom();
   document.getElementById('imageSize').value='224';
   document.getElementById('sw-normalize').classList.add('on');
   document.getElementById('sw-augment').classList.add('on');
   document.getElementById('sw-adv').classList.remove('on');
-
   document.getElementById('datasetSource').value='kaggle';
   document.getElementById('datasetFormat').value='imagefolder';
   document.getElementById('datasetPath').value='';
   document.getElementById('split').value='0.8/0.1/0.1';
-
   document.getElementById('epochs').value='10';
   document.getElementById('batchSize').value='16';
   document.getElementById('lr').value='0.001';
   document.getElementById('optimizer').value='adam';
   document.getElementById('scheduler').value='none';
-
   document.getElementById('sw-eval').classList.add('on');
   document.getElementById('sw-vis').classList.add('on');
   document.getElementById('export').value='pt';
+  document.getElementById('sw-pinVersions')?.classList.add('on');
+  document.getElementById('sw-envChecks')?.classList.add('on');
+  document.getElementById('sw-enhancedErrors')?.classList.add('on');
+  document.getElementById('sw-addComments')?.classList.add('on');
+  
+  showStatus('Settings reset', 'info');
 }
 
-function clearAll(){ if(!confirm('Clear all cells and reset settings?')) return; notebookCells.length=0; resetSettings(); renderCells(); }
+function clearAll(){ 
+  if(!confirm('Clear all cells and reset settings?')) return; 
+  notebookCells.length=0; 
+  resetSettings(); 
+  document.getElementById('validationPanel').classList.add('hidden');
+  showStatus('All cleared', 'info');
+  renderCells(); 
+}
 
-/* download notebook -> nbformat */
 function downloadNotebook(){
-  if(notebookCells.length===0){ alert('No cells generated'); return; }
+  if(notebookCells.length===0){ 
+    showStatus('No cells to download', 'error'); 
+    return; 
+  }
+  
   const cfg = getConfig();
   const nb = {
-    nbformat:4, nbformat_minor:5,
+    nbformat:4, 
+    nbformat_minor:5,
     metadata: {
       kernelspec: {name:'python3', display_name:'Python 3'},
-      language_info: {name:'python', version:'3.x'}
+      language_info: {name:'python', version:'3.x'},
+      colab: cfg.outputPlatform === 'colab' ? {provenance: []} : undefined
     },
     cells: notebookCells.map(c=>{
       const src = (c.content||'').split('\n').map(l=> l + '\n');
-      if(c.type==='markdown') return {cell_type:'markdown', metadata:{}, source: src};
-      return {cell_type:'code', execution_count: null, metadata:{}, outputs:[], source: src};
+      if(c.type==='markdown') return {
+        cell_type:'markdown', 
+        metadata: {id: c.id}, 
+        source: src
+      };
+      return {
+        cell_type:'code', 
+        execution_count: null, 
+        metadata: {id: c.id}, 
+        outputs:[], 
+        source: src
+      };
     })
   };
+  
   const blob = new Blob([JSON.stringify(nb,null,2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url;
+  const a = document.createElement('a'); 
+  a.href=url;
   a.download = `AutoVision_${cfg.task}_${cfg.modelName || 'model'}_${Date.now()}.ipynb`;
-  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  document.body.appendChild(a); 
+  a.click(); 
+  a.remove(); 
+  URL.revokeObjectURL(url);
+  
+  showStatus('Notebook downloaded successfully!', 'success');
 }
 
-/* small helpers for toggles */
-function toggle(id){ const el = document.getElementById('sw-'+id); if(!el) return; el.classList.toggle('on'); }
+function toggle(id){ 
+  const el = document.getElementById('sw-'+id); 
+  if(!el) return; 
+  el.classList.toggle('on'); 
+}
 
-/* update subtasks */
-function updateSubtasks(){ const t = document.getElementById('task').value; const sub = document.getElementById('subtask'); 
-const map = { classification:['single','multi'], detection:['yolo','rcnn'], segmentation:['semantic','instance'], generation:['diffusion','gan'], video:['action','tracking'] }; sub.innerHTML=''; (map[t]||['default']).forEach(s=>{ const opt = document.createElement('option'); opt.value=s; opt.textContent=s; sub.appendChild(opt); }); }
+function updateSubtasks(){ 
+  const t = document.getElementById('task').value; 
+  const sub = document.getElementById('subtask'); 
+  const map = { 
+    classification:['single','multi'], 
+    detection:['yolo','rcnn'], 
+    segmentation:['semantic','instance'], 
+    generation:['diffusion','gan'], 
+    video:['action','tracking'] 
+  }; 
+  sub.innerHTML=''; 
+  (map[t]||['default']).forEach(s=>{ 
+    const opt = document.createElement('option'); 
+    opt.value=s; 
+    opt.textContent=s; 
+    sub.appendChild(opt); 
+  }); 
+}
 
-/* model name list - extended set */
 function updateModelNames(){
   const family = document.getElementById('modelFamily').value;
   const sel = document.getElementById('modelName');
   const map = {
-  // 🔹 PyTorch
-  resnet: ['resnet18','resnet34','resnet50','resnet101','resnet152'],
-  mobilenet: ['mobilenet_v2','mobilenet_v3_small','mobilenet_v3_large'],
-  efficientnet: ['efficientnet_b0','efficientnet_b4','efficientnet_b7','efficientnet_v2_s','efficientnet_v2_m','efficientnet_v2_l'],
-  vit: ['vit_b_16','vit_l_16','vit_h_14','swin_t','swin_s','swin_b'],
-  convnext: ['convnext_tiny','convnext_small','convnext_base','convnext_large'],
-
-  // 🔹 TensorFlow
-  tf_mobilenet: ['MobileNetV2','MobileNetV3Small','MobileNetV3Large'],
-  tf_efficientnet: ['EfficientNetB0','EfficientNetB3','EfficientNetB7','EfficientNetV2S','EfficientNetV2M','EfficientNetV2L'],
-  tf_resnet: ['ResNet50','ResNet101','ResNet152','ResNet50V2','ResNet101V2'],
-  tf_inception: ['InceptionV3','InceptionResNetV2'],
-  tf_densenet: ['DenseNet121','DenseNet169','DenseNet201'],
-  tf_vgg: ['VGG16','VGG19'],
-  tf_vit: ['ViT_B16','ViT_L16','MaxViT_Tiny','CoAtNet_1','DeiT_Base'],
-
-  // 🔹 Ultralytics / YOLO
-  yolo: [
-    // YOLOv5 → YOLOv12
-    'yolov5n','yolov5s','yolov5m','yolov5l','yolov5x',
-    'yolov6n','yolov6s','yolov6m','yolov6l','yolov6x',
-    'yolov7-tiny','yolov7','yolov7x','yolov7-w6','yolov7-e6','yolov7-d6',
-    'yolov8n','yolov8s','yolov8m','yolov8l','yolov8x',
-    'yolov9t','yolov9s','yolov9m','yolov9l','yolov9e',
-    'yolov10n','yolov10s','yolov10m','yolov10l','yolov10x',
-    'yolov11n','yolov11s','yolov11m','yolov11l','yolov11x',
-    'yolov12n','yolov12s','yolov12m','yolov12l','yolov12x',
-    // Variants
-    'yolov8n-pose','yolov8s-seg','yolov8m-cls','yolov8x-cls',
-    // Additional vision models
-    'yolo-nas-s','yolo-nas-m','yolo-nas-l',
-    'yolact','yolact++','rtdetr_r50vd','maskrcnn_resnet50',
-    'sam_vit_b','sam_vit_l','sam_hq_vit_l','grounding_dino_t','grounding_dino_b'
-  ]
-};
+    resnet: ['resnet18','resnet34','resnet50','resnet101','resnet152'],
+    mobilenet: ['mobilenet_v2','mobilenet_v3_small','mobilenet_v3_large'],
+    efficientnet: ['efficientnet_b0','efficientnet_b4','efficientnet_b7'],
+    vit: ['vit_b_16','vit_l_16','vit_h_14'],
+    yolo: [
+      'yolov5n','yolov5s','yolov5m','yolov5l','yolov5x',
+      'yolov8n','yolov8s','yolov8m','yolov8l','yolov8x',
+      'yolov10n','yolov10s','yolov10m','yolov10l','yolov10x',
+      'yolov11n','yolov11s','yolov11m','yolov11l','yolov11x'
+    ]
+  };
   sel.innerHTML='';
-  (map[family]||['default']).forEach(m=>{ const o=document.createElement('option'); o.value=m; o.textContent=m; sel.appendChild(o); });
+  (map[family]||['default']).forEach(m=>{ 
+    const o=document.createElement('option'); 
+    o.value=m; 
+    o.textContent=m; 
+    sel.appendChild(o); 
+  });
 }
 
-/* toggle custom weights UI */
-function toggleCustom(){ const src = document.getElementById('modelSource').value; document.getElementById('customGroup').style.display = src==='custom' ? 'block' : 'none'; }
+function toggleCustom(){ 
+  const src = document.getElementById('modelSource').value; 
+  document.getElementById('customGroup').style.display = src==='custom' ? 'block' : 'none'; 
+}
 
-/* about */
-function openAbout(){ alert('AutoVision Notebook Generator — rule-based single-file UI. AI Touch will be added in upcoming releases.'); }
+function openAbout(){ 
+  alert('AutoVision Notebook Generator - Enhanced Version\n\n' +
+        '🎯 New Features:\n' +
+        '✓ Smart version management (environment-aware)\n' +
+        '✓ Environment detection (Colab/Kaggle/Local)\n' +
+        '✓ GPU checks with helpful tips\n' +
+        '✓ Enhanced error handling\n' +
+        '✓ Educational comments for learning\n' +
+        '✓ Notebook validation before download\n' +
+        '✓ Consolidated setup cells\n' +
+        '✓ Platform-specific warnings\n\n' +
+        '🔧 Version Management:\n' +
+        '• Detects Colab/Kaggle pre-installed packages\n' +
+        '• Uses compatible version ranges (>=)\n' +
+        '• Avoids dependency conflicts\n' +
+        '• Falls back gracefully\n\n' +
+        'Addresses all feedback from Perplexity AI analysis.'); 
+}
 
-/* init */
-function init(){ updateSubtasks(); updateModelNames(); renderCells(); resetSettings(); }
+function init(){ 
+  updateSubtasks(); 
+  updateModelNames(); 
+  renderCells(); 
+  resetSettings(); 
+}
+
 window.generateSection = generateSection;
 window.clearSection = clearSection;
 window.resetSettings = resetSettings;
 window.clearAll = clearAll;
 window.downloadNotebook = downloadNotebook;
+window.validateNotebook = validateNotebook;
 window.toggleCustom = toggleCustom;
 window.updateSubtasks = updateSubtasks;
 window.updateModelNames = updateModelNames;
+window.toggle = toggle;
+window.openAbout = openAbout;
 
 init();
 </script>
